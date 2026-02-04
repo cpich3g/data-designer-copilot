@@ -1,0 +1,404 @@
+# Customer Support Tickets Dataset Configuration
+# 
+# Generates realistic customer support ticket data with:
+# - Customer profiles (using Faker)
+# - Various ticket categories and priorities
+# - Customer complaints/inquiries
+# - Agent responses
+# - Quality scoring of agent responses
+
+columns:
+  # -----------------------------------------------------
+  # Ticket Identification
+  # -----------------------------------------------------
+  
+  - name: ticket_id
+    column_type: sampler
+    sampler_type: uuid
+    params: {}
+
+  # -----------------------------------------------------
+  # Customer Profile
+  # -----------------------------------------------------
+  
+  - name: customer
+    column_type: sampler
+    sampler_type: person_from_faker
+    params:
+      locale: en_US
+      age_range:
+        - 18
+        - 75
+    drop: true
+
+  - name: customer_name
+    column_type: expression
+    expr: "{{ customer['first_name'] }} {{ customer['last_name'] }}"
+    dtype: str
+
+  - name: customer_email
+    column_type: expression
+    expr: "{{ customer['first_name'] | lower }}.{{ customer['last_name'] | lower }}@example.com"
+    dtype: str
+
+  - name: customer_age
+    column_type: expression
+    expr: "{{ customer['age'] }}"
+    dtype: int
+
+  # Customer tenure (months as a customer)
+  - name: customer_tenure_months
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 1
+      high: 120
+    convert_to: int
+
+  # Customer tier based on tenure
+  - name: customer_tier
+    column_type: expression
+    expr: "{% if customer_tenure_months < 12 %}Bronze{% elif customer_tenure_months < 36 %}Silver{% elif customer_tenure_months < 60 %}Gold{% else %}Platinum{% endif %}"
+    dtype: str
+
+  # -----------------------------------------------------
+  # Ticket Metadata
+  # -----------------------------------------------------
+  
+  - name: ticket_category
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Billing
+        - Technical Support
+        - Account Management
+        - Product Inquiry
+        - Shipping & Delivery
+        - Returns & Refunds
+        - Complaints
+      weights:
+        - 2
+        - 3
+        - 1
+        - 2
+        - 2
+        - 2
+        - 1
+
+  - name: ticket_subcategory
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: ticket_category
+      values:
+        Billing:
+          - Incorrect Charge
+          - Payment Failed
+          - Subscription Issue
+          - Invoice Request
+        Technical Support:
+          - Login Issues
+          - App Crash
+          - Feature Not Working
+          - Slow Performance
+          - Data Sync Problem
+        Account Management:
+          - Update Profile
+          - Password Reset
+          - Close Account
+          - Privacy Settings
+        Product Inquiry:
+          - Pricing Question
+          - Feature Availability
+          - Product Comparison
+          - Upgrade Options
+        Shipping & Delivery:
+          - Delayed Shipment
+          - Wrong Item Received
+          - Tracking Issue
+          - Address Change
+        Returns & Refunds:
+          - Return Request
+          - Refund Status
+          - Exchange Request
+          - Damaged Product
+        Complaints:
+          - Poor Service
+          - Product Quality
+          - Communication Issue
+          - Policy Disagreement
+
+  - name: priority
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Low
+        - Medium
+        - High
+        - Critical
+      weights:
+        - 3
+        - 4
+        - 2
+        - 1
+
+  - name: contact_channel
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Email
+        - Chat
+        - Phone
+        - Social Media
+        - Web Form
+      weights:
+        - 3
+        - 4
+        - 2
+        - 1
+        - 2
+
+  # Ticket creation timestamp
+  - name: created_at
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2024-01-01"
+      end: "2024-12-31"
+      unit: s
+
+  # Customer sentiment (affects tone of message)
+  - name: customer_sentiment
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Frustrated
+        - Neutral
+        - Confused
+        - Angry
+        - Polite
+      weights:
+        - 3
+        - 3
+        - 2
+        - 1
+        - 3
+
+  # -----------------------------------------------------
+  # Customer Message Generation
+  # -----------------------------------------------------
+  
+  - name: customer_message
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Write a realistic customer support message from {{ customer_name }} regarding 
+      a {{ ticket_subcategory }} issue in the {{ ticket_category }} category.
+      
+      Customer details:
+      - Name: {{ customer_name }}
+      - Customer tier: {{ customer_tier }} (member for {{ customer_tenure_months }} months)
+      - Contact channel: {{ contact_channel }}
+      - Sentiment: {{ customer_sentiment }}
+      - Priority level: {{ priority }}
+      
+      The message should:
+      - Reflect the {{ customer_sentiment | lower }} tone appropriately
+      - Be specific about the {{ ticket_subcategory }} problem
+      - Be 2-4 sentences long
+      - Sound natural for a {{ contact_channel | lower }} communication
+      
+      Write only the customer's message, no greeting from support.
+    system_prompt: |
+      You are generating realistic customer support messages. Match the tone to 
+      the sentiment - frustrated customers may use stronger language, polite 
+      customers are courteous. Keep messages authentic and specific to the issue type.
+
+  # -----------------------------------------------------
+  # Support Agent Information
+  # -----------------------------------------------------
+  
+  - name: agent_id
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 1001
+      high: 1050
+    convert_to: int
+
+  - name: agent_experience_years
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 0
+      high: 10
+    convert_to: int
+
+  - name: agent_experience_level
+    column_type: expression
+    expr: "{% if agent_experience_years < 1 %}Junior{% elif agent_experience_years < 3 %}Mid-Level{% elif agent_experience_years < 6 %}Senior{% else %}Expert{% endif %}"
+    dtype: str
+
+  # -----------------------------------------------------
+  # Agent Response Generation
+  # -----------------------------------------------------
+  
+  - name: agent_response
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Write a professional customer support response to this ticket:
+      
+      Customer: {{ customer_name }} ({{ customer_tier }} member)
+      Category: {{ ticket_category }} - {{ ticket_subcategory }}
+      Priority: {{ priority }}
+      Channel: {{ contact_channel }}
+      
+      Customer Message:
+      "{{ customer_message }}"
+      
+      You are a {{ agent_experience_level }} support agent ({{ agent_experience_years }} years experience).
+      
+      Your response should:
+      - Address the customer by name
+      - Acknowledge their concern with empathy
+      - Provide a helpful solution or next steps for the {{ ticket_subcategory }} issue
+      - Be appropriate for {{ contact_channel }} communication
+      - Match the formality level ({{ contact_channel }} tends to be {% if contact_channel == 'Chat' %}more casual{% elif contact_channel == 'Email' %}formal{% else %}conversational{% endif %})
+      - Be 3-5 sentences
+    system_prompt: |
+      You are a professional customer support agent. Be empathetic, solution-oriented, 
+      and maintain a positive tone even with frustrated customers. Provide specific, 
+      actionable solutions. Never be defensive or dismissive.
+
+  # -----------------------------------------------------
+  # Response Analysis
+  # -----------------------------------------------------
+  
+  - name: response_analysis
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Analyze this customer support interaction:
+      
+      Customer Message: "{{ customer_message }}"
+      Agent Response: "{{ agent_response }}"
+      
+      Extract structured information about the interaction.
+    output_format:
+      type: object
+      properties:
+        issue_resolved:
+          type: string
+          enum:
+            - likely_resolved
+            - partially_addressed
+            - needs_followup
+            - escalation_required
+        response_tone:
+          type: string
+          enum:
+            - empathetic
+            - professional
+            - neutral
+            - cold
+        key_actions:
+          type: array
+          items:
+            type: string
+        followup_needed:
+          type: boolean
+      required:
+        - issue_resolved
+        - response_tone
+        - key_actions
+        - followup_needed
+
+  # -----------------------------------------------------
+  # Quality Scoring
+  # -----------------------------------------------------
+  
+  - name: response_quality_score
+    column_type: llm-judge
+    model_alias: nvidia-text
+    prompt: |
+      Evaluate the quality of this customer support response:
+      
+      Customer Tier: {{ customer_tier }}
+      Issue Category: {{ ticket_category }} - {{ ticket_subcategory }}
+      Priority: {{ priority }}
+      
+      Customer Message:
+      "{{ customer_message }}"
+      
+      Agent Response:
+      "{{ agent_response }}"
+      
+      Evaluate the agent's response quality.
+    scores:
+      - name: empathy
+        description: How well did the agent acknowledge and validate the customer's feelings?
+        options:
+          1: No empathy shown - robotic or dismissive
+          2: Minimal empathy - generic acknowledgment
+          3: Moderate empathy - genuine concern shown
+          4: Strong empathy - customer feels truly heard and understood
+      - name: solution_quality
+        description: How effective and actionable was the proposed solution?
+        options:
+          1: No solution provided or completely irrelevant
+          2: Vague solution - lacks specific steps
+          3: Adequate solution - addresses the main issue
+          4: Excellent solution - comprehensive, specific, and proactive
+      - name: professionalism
+        description: How professional and appropriate was the response tone?
+        options:
+          1: Unprofessional - rude, defensive, or inappropriate
+          2: Below standard - too casual or slightly off-tone
+          3: Professional - appropriate for the channel and situation
+          4: Exceptional - perfectly calibrated, builds rapport
+      - name: completeness
+        description: Did the response address all aspects of the customer's concern?
+        options:
+          1: Incomplete - missed major points
+          2: Partially complete - addressed some concerns
+          3: Complete - all main points addressed
+          4: Thorough - addressed everything plus anticipated follow-ups
+
+  # -----------------------------------------------------
+  # Derived Metrics
+  # -----------------------------------------------------
+  
+  - name: customer_message_length
+    column_type: expression
+    expr: "{{ customer_message.split() | length }}"
+    dtype: int
+
+  - name: agent_response_length
+    column_type: expression
+    expr: "{{ agent_response.split() | length }}"
+    dtype: int
+
+  - name: empathy_score
+    column_type: expression
+    expr: "{{ response_quality_score['empathy']['score'] }}"
+    dtype: int
+
+  - name: solution_score
+    column_type: expression
+    expr: "{{ response_quality_score['solution_quality']['score'] }}"
+    dtype: int
+
+  - name: overall_quality_avg
+    column_type: expression
+    expr: "{{ ((response_quality_score['empathy']['score'] + response_quality_score['solution_quality']['score'] + response_quality_score['professionalism']['score'] + response_quality_score['completeness']['score']) / 4) | round(2) }}"
+    dtype: float
+
+  - name: is_high_quality_response
+    column_type: expression
+    expr: "{% if overall_quality_avg >= 3.0 %}true{% else %}false{% endif %}"
+    dtype: str

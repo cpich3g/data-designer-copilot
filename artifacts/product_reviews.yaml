@@ -1,0 +1,128 @@
+columns:
+  # Product identification
+  - name: review_id
+    column_type: sampler
+    sampler_type: uuid
+    params:
+      prefix: "REV"
+      short_form: true
+
+  - name: product_category
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [Electronics, Clothing, Home & Kitchen, Books, Sports & Outdoors]
+      weights: [3, 2, 2, 1, 1]
+
+  - name: product_name
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Generate a realistic product name for the {{ product_category }} category.
+      Just provide the product name, nothing else.
+
+  # Customer information
+  - name: customer
+    column_type: sampler
+    sampler_type: person_from_faker
+    params:
+      locale: en_US
+      age_range: [18, 70]
+    drop: true
+
+  - name: customer_name
+    column_type: expression
+    expr: "{{ customer['first_name'] }} {{ customer['last_name'] }}"
+    dtype: str
+
+  # Rating (1-5 stars)
+  - name: rating
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [1, 2, 3, 4, 5]
+      weights: [0.05, 0.1, 0.15, 0.35, 0.35]
+
+  # Review date
+  - name: review_date
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2024-01-01"
+      end: "2026-01-31"
+      unit: D
+
+  # Review text generated based on rating
+  - name: review_text
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Write a realistic customer review for "{{ product_name }}" ({{ product_category }}).
+      The customer gave a {{ rating }}-star rating.
+      
+      Guidelines:
+      - 1-2 stars: Frustrated, disappointed, mentions specific problems
+      - 3 stars: Mixed feelings, some pros and cons
+      - 4-5 stars: Satisfied, enthusiastic, recommends the product
+      
+      Write 2-4 sentences from the customer's perspective.
+
+  # Sentiment analysis
+  - name: sentiment_analysis
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Analyze the sentiment of this product review:
+      
+      Review: "{{ review_text }}"
+      Rating: {{ rating }} stars
+    output_format:
+      type: object
+      properties:
+        sentiment:
+          type: string
+          enum: [positive, neutral, negative]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        key_themes:
+          type: array
+          items:
+            type: string
+      required: [sentiment, confidence, key_themes]
+
+  # Review quality score using LLM judge
+  - name: review_quality
+    column_type: llm-judge
+    model_alias: nvidia-text
+    prompt: |
+      Evaluate the quality of this product review:
+      
+      Product: {{ product_name }}
+      Rating: {{ rating }} stars
+      Review: "{{ review_text }}"
+    scores:
+      - name: helpfulness
+        description: How helpful is this review for other customers
+        options:
+          1: Not helpful - vague or uninformative
+          2: Somewhat helpful - basic information
+          3: Very helpful - detailed and specific insights
+      - name: authenticity
+        description: How authentic does this review appear
+        options:
+          1: Appears fake or generic
+          2: Possibly genuine but unclear
+          3: Clearly authentic and personal
+
+  # Derived columns
+  - name: is_positive
+    column_type: expression
+    expr: "{% if rating >= 4 %}true{% else %}false{% endif %}"
+    dtype: str
+
+  - name: word_count
+    column_type: expression
+    expr: "{{ review_text.split() | length }}"
+    dtype: int

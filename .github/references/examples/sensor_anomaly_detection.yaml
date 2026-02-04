@@ -1,0 +1,307 @@
+# Time-Series Sensor Anomaly Detection Dataset
+# For training anomaly detection models with device metadata, sensor readings, and alert descriptions
+
+columns:
+  # ============================================
+  # DEVICE METADATA
+  # ============================================
+  
+  - name: device_id
+    column_type: sampler
+    sampler_type: uuid
+    params:
+      prefix: "SENSOR-"
+      short_form: true
+      uppercase: true
+
+  - name: device_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - temperature_sensor
+        - pressure_sensor
+        - vibration_sensor
+        - humidity_sensor
+        - flow_meter
+        - power_monitor
+      weights: [3, 2, 2, 2, 1, 1]
+
+  - name: device_location
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Building_A_Floor_1
+        - Building_A_Floor_2
+        - Building_B_Floor_1
+        - Building_B_Floor_2
+        - Warehouse_Zone_1
+        - Warehouse_Zone_2
+        - Server_Room
+        - Manufacturing_Line_1
+        - Manufacturing_Line_2
+
+  - name: device_manufacturer
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - SensorTech Inc
+        - Industrial Dynamics
+        - PrecisionMetrics
+        - IoT Solutions Ltd
+      weights: [3, 3, 2, 2]
+
+  - name: installation_date
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2020-01-01"
+      end: "2024-06-30"
+      unit: D
+
+  # ============================================
+  # TIME-SERIES READING METADATA
+  # ============================================
+
+  - name: reading_timestamp
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2025-01-01T00:00:00"
+      end: "2025-12-31T23:59:59"
+      unit: s
+
+  # ============================================
+  # SENSOR VALUE PARAMETERS (by device type)
+  # ============================================
+
+  - name: expected_value
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: device_type
+      values:
+        temperature_sensor: [22.0, 23.0, 24.0, 25.0]
+        pressure_sensor: [100.0, 101.0, 102.0]
+        vibration_sensor: [0.5, 1.0, 1.5]
+        humidity_sensor: [45.0, 50.0, 55.0]
+        flow_meter: [150.0, 175.0, 200.0]
+        power_monitor: [220.0, 230.0, 240.0]
+
+  - name: value_stddev
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: device_type
+      values:
+        temperature_sensor: [1.5]
+        pressure_sensor: [2.0]
+        vibration_sensor: [0.3]
+        humidity_sensor: [5.0]
+        flow_meter: [15.0]
+        power_monitor: [5.0]
+
+  # ============================================
+  # ANOMALY FLAG AND TYPE
+  # ============================================
+
+  - name: is_anomaly
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.12
+
+  - name: anomaly_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - none
+        - spike
+        - drift
+        - dropout
+        - noise
+        - flatline
+        - oscillation
+      weights: [0.1, 2, 2, 1, 2, 1, 1]
+
+  # ============================================
+  # SENSOR READING VALUES
+  # ============================================
+
+  - name: normal_noise
+    column_type: sampler
+    sampler_type: gaussian
+    params:
+      mean: 0
+      stddev: 1
+    drop: true
+
+  - name: anomaly_magnitude
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 3.0
+      high: 8.0
+    drop: true
+
+  - name: anomaly_direction
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [1, -1]
+      weights: [1, 1]
+    drop: true
+
+  # Calculate sensor reading based on anomaly status
+  - name: sensor_reading
+    column_type: expression
+    expr: >
+      {% if is_anomaly %}
+        {% if anomaly_type == 'spike' %}
+          {{ expected_value + (anomaly_magnitude * value_stddev * anomaly_direction) }}
+        {% elif anomaly_type == 'drift' %}
+          {{ expected_value + (anomaly_magnitude * 0.5 * value_stddev * anomaly_direction) }}
+        {% elif anomaly_type == 'dropout' %}
+          0.0
+        {% elif anomaly_type == 'flatline' %}
+          {{ expected_value }}
+        {% else %}
+          {{ expected_value + (normal_noise * value_stddev * 2.5) }}
+        {% endif %}
+      {% else %}
+        {{ expected_value + (normal_noise * value_stddev) }}
+      {% endif %}
+    dtype: float
+
+  # ============================================
+  # DERIVED METRICS
+  # ============================================
+
+  - name: deviation_from_expected
+    column_type: expression
+    expr: "{{ (sensor_reading - expected_value) | abs }}"
+    dtype: float
+
+  - name: z_score
+    column_type: expression
+    expr: "{{ (sensor_reading - expected_value) / value_stddev }}"
+    dtype: float
+
+  - name: severity_level
+    column_type: expression
+    expr: >
+      {% if not is_anomaly %}normal
+      {% elif (z_score | abs) > 5 %}critical
+      {% elif (z_score | abs) > 3 %}high
+      {% elif (z_score | abs) > 2 %}medium
+      {% else %}low{% endif %}
+    dtype: str
+
+  - name: measurement_unit
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: device_type
+      values:
+        temperature_sensor: ["°C"]
+        pressure_sensor: ["kPa"]
+        vibration_sensor: ["mm/s"]
+        humidity_sensor: ["%RH"]
+        flow_meter: ["L/min"]
+        power_monitor: ["V"]
+
+  # ============================================
+  # ALERT DESCRIPTION (LLM-generated)
+  # ============================================
+
+  - name: alert_description
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Generate a concise technical alert description for a sensor anomaly detection system.
+
+      Device Information:
+      - Device ID: {{ device_id }}
+      - Device Type: {{ device_type }}
+      - Location: {{ device_location }}
+      - Manufacturer: {{ device_manufacturer }}
+
+      Reading Details:
+      - Timestamp: {{ reading_timestamp }}
+      - Current Reading: {{ sensor_reading }} {{ measurement_unit }}
+      - Expected Value: {{ expected_value }} {{ measurement_unit }}
+      - Deviation: {{ deviation_from_expected }} {{ measurement_unit }}
+      - Z-Score: {{ z_score }}
+
+      Anomaly Status:
+      - Is Anomaly: {{ is_anomaly }}
+      - Anomaly Type: {{ anomaly_type }}
+      - Severity: {{ severity_level }}
+
+      Requirements:
+      {% if is_anomaly %}
+      - Write a 2-3 sentence alert message describing the anomaly
+      - Include the anomaly type, severity, and recommended action
+      - Use technical but clear language suitable for operations staff
+      - Example actions: investigate, calibrate, replace, monitor closely
+      {% else %}
+      - Write a brief 1 sentence status message confirming normal operation
+      - Mention the device is operating within expected parameters
+      {% endif %}
+    system_prompt: |
+      You are an industrial IoT monitoring system generating alert messages.
+      Be concise, technical, and actionable. Do not use markdown formatting.
+
+  # ============================================
+  # ROOT CAUSE ANALYSIS (for anomalies)
+  # ============================================
+
+  - name: root_cause_analysis
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Analyze the potential root cause for this sensor reading.
+
+      Device: {{ device_type }} ({{ device_id }})
+      Location: {{ device_location }}
+      Reading: {{ sensor_reading }} {{ measurement_unit }} (expected: {{ expected_value }})
+      Is Anomaly: {{ is_anomaly }}
+      Anomaly Type: {% if is_anomaly %}{{ anomaly_type }}{% else %}N/A{% endif %}
+
+      Provide a structured analysis of potential causes and recommended actions.
+    output_format:
+      type: object
+      properties:
+        potential_causes:
+          type: array
+          items:
+            type: string
+          description: List of 1-3 potential causes for the reading
+        confidence:
+          type: string
+          enum: [high, medium, low]
+          description: Confidence in the root cause analysis
+        recommended_action:
+          type: string
+          enum: [no_action, monitor, investigate, maintenance_required, immediate_attention]
+        priority_score:
+          type: integer
+          description: Priority score from 1 (lowest) to 5 (highest)
+      required: [potential_causes, confidence, recommended_action, priority_score]
+
+  # ============================================
+  # FINAL ANOMALY LABEL (for ML training)
+  # ============================================
+
+  - name: anomaly_label
+    column_type: expression
+    expr: "{% if is_anomaly %}1{% else %}0{% endif %}"
+    dtype: int
+
+  - name: anomaly_category
+    column_type: expression
+    expr: "{% if not is_anomaly %}normal{% else %}{{ anomaly_type }}{% endif %}"
+    dtype: str

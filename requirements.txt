@@ -1,0 +1,4 @@
+python-dotenv
+data-designer
+data-designer-declarative-columns
+copilot-sdk

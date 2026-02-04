@@ -1,0 +1,362 @@
+# Financial Transactions Dataset for Fraud/Anomaly Detection
+# Includes account holder info, transaction details, and fraud labels
+
+columns:
+  # ============ ACCOUNT HOLDER INFORMATION ============
+  
+  - name: transaction_id
+    column_type: sampler
+    sampler_type: uuid
+    params:
+      prefix: "TXN"
+      short_form: true
+      uppercase: true
+
+  - name: account_holder
+    column_type: sampler
+    sampler_type: person_from_faker
+    params:
+      locale: en_US
+      age_range: [21, 75]
+    drop: true
+
+  - name: customer_name
+    column_type: expression
+    expr: "{{ account_holder['first_name'] }} {{ account_holder['last_name'] }}"
+    dtype: str
+
+  - name: customer_age
+    column_type: expression
+    expr: "{{ account_holder['age'] }}"
+    dtype: int
+
+  - name: customer_city
+    column_type: expression
+    expr: "{{ account_holder['city'] }}"
+    dtype: str
+
+  - name: account_id
+    column_type: sampler
+    sampler_type: uuid
+    params:
+      prefix: "ACC"
+      short_form: true
+      uppercase: true
+
+  - name: account_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [Checking, Savings, Credit Card, Investment]
+      weights: [4, 2, 3, 1]
+
+  - name: account_tenure_years
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 0.5
+      high: 25
+    convert_to: int
+
+  # ============ TRANSACTION DETAILS ============
+
+  - name: transaction_datetime
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2025-01-01"
+      end: "2026-01-31"
+      unit: s
+
+  - name: transaction_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [Purchase, Withdrawal, Transfer, Payment, Deposit, Refund]
+      weights: [35, 15, 20, 15, 10, 5]
+
+  - name: merchant_category
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [Retail, Grocery, Gas Station, Restaurant, Online Shopping, Travel, Entertainment, Utilities, Healthcare, ATM]
+      weights: [15, 20, 10, 15, 12, 5, 8, 7, 5, 3]
+
+  - name: merchant_name
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: merchant_category
+      values:
+        Retail:
+          - Target
+          - Walmart
+          - Best Buy
+          - Costco
+          - Macys
+        Grocery:
+          - Whole Foods
+          - Kroger
+          - Safeway
+          - Trader Joes
+          - Publix
+        Gas Station:
+          - Shell
+          - Chevron
+          - ExxonMobil
+          - BP
+          - Costco Gas
+        Restaurant:
+          - McDonalds
+          - Starbucks
+          - Chipotle
+          - Olive Garden
+          - Local Diner
+        Online Shopping:
+          - Amazon
+          - eBay
+          - Etsy
+          - Shopify Store
+          - AliExpress
+        Travel:
+          - Delta Airlines
+          - United Airlines
+          - Marriott Hotels
+          - Airbnb
+          - Uber
+        Entertainment:
+          - Netflix
+          - Spotify
+          - AMC Theaters
+          - GameStop
+          - Ticketmaster
+        Utilities:
+          - Electric Company
+          - Water Utility
+          - Internet Provider
+          - Phone Bill
+          - Gas Company
+        Healthcare:
+          - CVS Pharmacy
+          - Walgreens
+          - Hospital
+          - Doctor Office
+          - Lab Services
+        ATM:
+          - Bank ATM
+          - Non-Bank ATM
+          - Airport ATM
+          - Casino ATM
+          - Convenience Store ATM
+
+  # Transaction amount using lognormal distribution (realistic for financial data)
+  - name: transaction_amount
+    column_type: sampler
+    sampler_type: scipy
+    params:
+      dist_name: lognorm
+      dist_params:
+        s: 1.2
+        loc: 5
+        scale: 80
+      decimal_places: 2
+
+  - name: transaction_currency
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [USD, EUR, GBP, CAD, MXN]
+      weights: [85, 5, 3, 4, 3]
+
+  - name: transaction_channel
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [In-Store, Online, Mobile App, ATM, Phone]
+      weights: [30, 35, 20, 10, 5]
+
+  - name: device_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [iOS, Android, Desktop, POS Terminal, Unknown]
+      weights: [25, 30, 20, 20, 5]
+
+  - name: transaction_country
+    column_type: sampler
+    sampler_type: category
+    params:
+      values: [USA, Canada, Mexico, UK, Germany, France, China, Brazil, Unknown]
+      weights: [70, 8, 5, 4, 3, 2, 3, 2, 3]
+
+  # ============ BEHAVIORAL FEATURES ============
+
+  - name: is_weekend
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.28
+
+  - name: is_night_transaction
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.15
+
+  - name: distance_from_home_miles
+    column_type: sampler
+    sampler_type: scipy
+    params:
+      dist_name: expon
+      dist_params:
+        loc: 0
+        scale: 25
+      decimal_places: 1
+
+  - name: velocity_24h_count
+    column_type: sampler
+    sampler_type: poisson
+    params:
+      mean: 3
+
+  - name: velocity_24h_amount
+    column_type: sampler
+    sampler_type: scipy
+    params:
+      dist_name: lognorm
+      dist_params:
+        s: 0.8
+        loc: 0
+        scale: 200
+      decimal_places: 2
+
+  # ============ RISK INDICATORS ============
+
+  - name: is_new_merchant
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.12
+
+  - name: is_international
+    column_type: expression
+    expr: "{% if transaction_country != 'USA' %}true{% else %}false{% endif %}"
+    dtype: str
+
+  - name: card_present
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.55
+
+  - name: cvv_match
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.92
+
+  - name: address_match
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.88
+
+  # ============ FRAUD LABELS ============
+
+  # Primary fraud label (imbalanced like real-world data ~2% fraud rate)
+  - name: is_fraud
+    column_type: sampler
+    sampler_type: bernoulli
+    params:
+      p: 0.02
+
+  - name: fraud_type
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      {% if is_fraud == true %}
+      Based on this transaction context, classify the fraud type. Choose ONE from:
+      - Card Not Present Fraud
+      - Account Takeover
+      - Identity Theft
+      - Friendly Fraud
+      - Synthetic Identity Fraud
+      - Card Skimming
+      - Phishing Attack
+      
+      Transaction details:
+      - Amount: ${{ transaction_amount }}
+      - Channel: {{ transaction_channel }}
+      - Merchant: {{ merchant_name }} ({{ merchant_category }})
+      - Card Present: {{ card_present }}
+      - CVV Match: {{ cvv_match }}
+      - International: {{ is_international }}
+      - Night Transaction: {{ is_night_transaction }}
+      
+      Respond with ONLY the fraud type name, nothing else.
+      {% else %}
+      Respond with exactly: Not Fraud
+      {% endif %}
+
+  # ============ ANOMALY SCORES (for model training) ============
+
+  - name: risk_assessment
+    column_type: llm-judge
+    model_alias: nvidia-text
+    prompt: |
+      Assess the risk level of this financial transaction for potential fraud.
+      
+      Transaction Details:
+      - Amount: ${{ transaction_amount }} {{ transaction_currency }}
+      - Type: {{ transaction_type }}
+      - Merchant: {{ merchant_name }} ({{ merchant_category }})
+      - Channel: {{ transaction_channel }}
+      - Country: {{ transaction_country }}
+      
+      Account Context:
+      - Account Type: {{ account_type }}
+      - Account Tenure: {{ account_tenure_years }} years
+      
+      Risk Indicators:
+      - Card Present: {{ card_present }}
+      - CVV Match: {{ cvv_match }}
+      - Address Match: {{ address_match }}
+      - New Merchant: {{ is_new_merchant }}
+      - International: {{ is_international }}
+      - Night Transaction: {{ is_night_transaction }}
+      - Weekend: {{ is_weekend }}
+      - Distance from Home: {{ distance_from_home_miles }} miles
+      - 24h Transaction Count: {{ velocity_24h_count }}
+      - 24h Transaction Amount: ${{ velocity_24h_amount }}
+      
+      Evaluate the transaction risk based on these factors.
+    scores:
+      - name: anomaly_score
+        description: How anomalous/suspicious is this transaction (1=normal, 5=highly suspicious)
+        options:
+          1: Normal transaction with no suspicious indicators
+          2: Slightly unusual but likely legitimate
+          3: Moderately suspicious, warrants monitoring
+          4: Highly suspicious, likely requires investigation
+          5: Extremely anomalous, strong fraud indicators
+
+  - name: anomaly_score_value
+    column_type: expression
+    expr: "{{ risk_assessment['anomaly_score']['score'] }}"
+    dtype: int
+
+  # ============ TRANSACTION NARRATIVE ============
+
+  - name: transaction_description
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Generate a brief, realistic transaction description that would appear on a bank statement.
+      
+      Transaction type: {{ transaction_type }}
+      Merchant: {{ merchant_name }}
+      Category: {{ merchant_category }}
+      Amount: ${{ transaction_amount }}
+      
+      Generate ONLY the description (max 50 characters), like what you'd see on a bank statement.
+      Examples: "AMAZON.COM*123ABC", "SHELL OIL 12345", "STARBUCKS #4521"

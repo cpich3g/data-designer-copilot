@@ -1,0 +1,535 @@
+# HR Resume Matching Dataset Configuration
+# Generates candidate resumes paired with job descriptions and match quality scores
+# for training HR and recruiting AI models
+
+columns:
+  # ============================================
+  # JOB POSTING FIELDS
+  # ============================================
+  
+  - name: job_id
+    column_type: sampler
+    sampler_type: uuid
+
+  - name: department
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Engineering
+        - Data Science
+        - Product Management
+        - Marketing
+        - Sales
+        - Human Resources
+        - Finance
+        - Operations
+        - Legal
+        - Customer Success
+      weights: [25, 15, 10, 10, 12, 5, 8, 8, 3, 4]
+
+  - name: seniority_level
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Entry Level
+        - Junior
+        - Mid-Level
+        - Senior
+        - Lead
+        - Principal
+        - Director
+        - VP
+      weights: [15, 20, 25, 20, 8, 5, 5, 2]
+
+  - name: job_title
+    column_type: sampler
+    sampler_type: subcategory
+    params:
+      category: department
+      values:
+        Engineering:
+          - Software Engineer
+          - Backend Developer
+          - Frontend Developer
+          - Full Stack Developer
+          - DevOps Engineer
+          - Site Reliability Engineer
+          - QA Engineer
+          - Security Engineer
+        Data Science:
+          - Data Scientist
+          - Machine Learning Engineer
+          - Data Analyst
+          - Data Engineer
+          - AI Research Scientist
+          - Business Intelligence Analyst
+        Product Management:
+          - Product Manager
+          - Technical Product Manager
+          - Product Owner
+          - Product Analyst
+        Marketing:
+          - Marketing Manager
+          - Content Marketing Specialist
+          - SEO Specialist
+          - Digital Marketing Manager
+          - Brand Manager
+        Sales:
+          - Account Executive
+          - Sales Development Representative
+          - Sales Manager
+          - Enterprise Sales Representative
+          - Solutions Consultant
+        Human Resources:
+          - HR Manager
+          - Recruiter
+          - HR Business Partner
+          - Talent Acquisition Specialist
+          - Compensation Analyst
+        Finance:
+          - Financial Analyst
+          - Accountant
+          - Controller
+          - FP&A Manager
+          - Treasury Analyst
+        Operations:
+          - Operations Manager
+          - Supply Chain Analyst
+          - Project Manager
+          - Business Analyst
+          - Process Improvement Specialist
+        Legal:
+          - Corporate Counsel
+          - Paralegal
+          - Compliance Officer
+          - Contract Manager
+        Customer Success:
+          - Customer Success Manager
+          - Technical Support Engineer
+          - Implementation Specialist
+          - Customer Experience Manager
+
+  - name: employment_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Full-time
+        - Part-time
+        - Contract
+        - Temporary
+      weights: [75, 10, 10, 5]
+
+  - name: work_model
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - Remote
+        - Hybrid
+        - On-site
+      weights: [35, 40, 25]
+
+  - name: years_experience_required
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 0
+      high: 15
+    convert_to: int
+
+  - name: salary_min
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 40000
+      high: 150000
+    convert_to: int
+
+  - name: salary_range_width
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 10000
+      high: 50000
+    convert_to: int
+    drop: true
+
+  - name: salary_max
+    column_type: expression
+    expr: "{{ salary_min + salary_range_width }}"
+    dtype: int
+
+  - name: job_description
+    column_type: llm-text
+    model_alias: nvidia-text
+    system_prompt: |
+      You are an expert HR professional writing compelling job descriptions. 
+      Write realistic, detailed job descriptions that include responsibilities, 
+      qualifications, and what success looks like in the role.
+    prompt: |
+      Write a comprehensive job description for the following position:
+      
+      Title: {{ seniority_level }} {{ job_title }}
+      Department: {{ department }}
+      Employment Type: {{ employment_type }}
+      Work Model: {{ work_model }}
+      Years of Experience Required: {{ years_experience_required }}+ years
+      Salary Range: ${{ salary_min }} - ${{ salary_max }}
+      
+      Include:
+      1. A brief company overview (make up a realistic tech company)
+      2. Role overview (2-3 sentences)
+      3. Key responsibilities (5-7 bullet points)
+      4. Required qualifications (5-7 bullet points)
+      5. Preferred qualifications (3-4 bullet points)
+      6. Benefits highlights (4-5 bullet points)
+      
+      Make the description engaging and professional.
+
+  - name: required_skills
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Based on this job description, extract the key required skills:
+      
+      Job Title: {{ seniority_level }} {{ job_title }}
+      Department: {{ department }}
+      
+      {{ job_description }}
+      
+      List 5-8 specific technical or professional skills required for this role.
+    output_format:
+      type: object
+      properties:
+        skills:
+          type: array
+          items:
+            type: string
+          minItems: 5
+          maxItems: 8
+      required:
+        - skills
+
+  # ============================================
+  # CANDIDATE FIELDS
+  # ============================================
+  
+  - name: candidate_id
+    column_type: sampler
+    sampler_type: uuid
+
+  - name: candidate
+    column_type: sampler
+    sampler_type: person_from_faker
+    params:
+      locale: en_US
+      age_range: [22, 60]
+    drop: true
+
+  - name: candidate_name
+    column_type: expression
+    expr: "{{ candidate['first_name'] }} {{ candidate['last_name'] }}"
+    dtype: str
+
+  - name: candidate_email
+    column_type: expression
+    expr: "{{ candidate['first_name'] | lower }}.{{ candidate['last_name'] | lower }}@email.com"
+    dtype: str
+
+  - name: candidate_years_experience
+    column_type: sampler
+    sampler_type: uniform
+    params:
+      low: 0
+      high: 25
+    convert_to: int
+
+  - name: candidate_education_level
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - High School Diploma
+        - Associate Degree
+        - Bachelor's Degree
+        - Master's Degree
+        - PhD
+        - Professional Certification
+      weights: [10, 10, 45, 25, 5, 5]
+
+  - name: candidate_current_title
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Generate a realistic current job title for a candidate with:
+      - {{ candidate_years_experience }} years of experience
+      - Education: {{ candidate_education_level }}
+      - Applying for: {{ job_title }} in {{ department }}
+      
+      The title should be somewhat related to the position they're applying for.
+      Return ONLY the job title, nothing else.
+
+  - name: candidate_resume
+    column_type: llm-text
+    model_alias: nvidia-text
+    system_prompt: |
+      You are a resume writer creating realistic candidate resumes. 
+      Generate professional resumes with varying quality levels to create 
+      a diverse training dataset. Include realistic details but don't make 
+      every resume perfect.
+    prompt: |
+      Generate a realistic resume for a job candidate with the following profile:
+      
+      Name: {{ candidate_name }}
+      Email: {{ candidate_email }}
+      Current Title: {{ candidate_current_title }}
+      Years of Experience: {{ candidate_years_experience }}
+      Education Level: {{ candidate_education_level }}
+      
+      They are applying for: {{ seniority_level }} {{ job_title }}
+      Department: {{ department }}
+      Required Experience: {{ years_experience_required }}+ years
+      
+      Create a complete resume including:
+      1. Professional Summary (2-3 sentences)
+      2. Work Experience (2-4 positions with company names, dates, responsibilities)
+      3. Education (institution, degree, graduation year)
+      4. Skills (8-12 relevant skills)
+      5. Certifications (if applicable)
+      
+      Make the resume realistic - the candidate's qualifications may or may not 
+      fully match the job requirements. Vary the quality and relevance naturally.
+
+  - name: candidate_skills
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Extract all skills mentioned in this resume:
+      
+      {{ candidate_resume }}
+      
+      List all technical, professional, and soft skills mentioned.
+    output_format:
+      type: object
+      properties:
+        technical_skills:
+          type: array
+          items:
+            type: string
+        soft_skills:
+          type: array
+          items:
+            type: string
+      required:
+        - technical_skills
+        - soft_skills
+
+  # ============================================
+  # MATCHING AND SCORING FIELDS
+  # ============================================
+
+  - name: match_analysis
+    column_type: llm-structured
+    model_alias: nvidia-text
+    prompt: |
+      Analyze how well this candidate matches the job requirements.
+      
+      JOB POSTING:
+      Title: {{ seniority_level }} {{ job_title }}
+      Department: {{ department }}
+      Required Experience: {{ years_experience_required }}+ years
+      
+      Job Description:
+      {{ job_description }}
+      
+      Required Skills: {{ required_skills }}
+      
+      CANDIDATE:
+      Name: {{ candidate_name }}
+      Years of Experience: {{ candidate_years_experience }}
+      Education: {{ candidate_education_level }}
+      
+      Resume:
+      {{ candidate_resume }}
+      
+      Candidate Skills: {{ candidate_skills }}
+      
+      Provide a detailed analysis of the match.
+    output_format:
+      type: object
+      properties:
+        experience_match:
+          type: string
+          description: Analysis of experience level match
+        skills_match:
+          type: string
+          description: Analysis of skills alignment
+        education_match:
+          type: string
+          description: Analysis of education requirements match
+        strengths:
+          type: array
+          items:
+            type: string
+          description: Key strengths for this role
+        gaps:
+          type: array
+          items:
+            type: string
+          description: Areas where candidate falls short
+        overall_assessment:
+          type: string
+          description: Brief overall assessment
+      required:
+        - experience_match
+        - skills_match
+        - education_match
+        - strengths
+        - gaps
+        - overall_assessment
+
+  - name: match_quality_score
+    column_type: llm-judge
+    model_alias: nvidia-text
+    prompt: |
+      Evaluate how well this candidate matches the job requirements.
+      
+      JOB REQUIREMENTS:
+      - Title: {{ seniority_level }} {{ job_title }}
+      - Department: {{ department }}
+      - Required Experience: {{ years_experience_required }}+ years
+      - Job Description: {{ job_description }}
+      - Required Skills: {{ required_skills }}
+      
+      CANDIDATE PROFILE:
+      - Years of Experience: {{ candidate_years_experience }}
+      - Education: {{ candidate_education_level }}
+      - Resume: {{ candidate_resume }}
+      - Skills: {{ candidate_skills }}
+      
+      MATCH ANALYSIS:
+      {{ match_analysis }}
+    scores:
+      - name: skills_alignment
+        description: How well the candidate's skills match the required skills
+        options:
+          1: "Poor - Less than 20% skill match, missing most critical skills"
+          2: "Below Average - 20-40% skill match, missing several key skills"
+          3: "Average - 40-60% skill match, has some required skills"
+          4: "Good - 60-80% skill match, has most required skills"
+          5: "Excellent - Over 80% skill match, exceeds requirements"
+      
+      - name: experience_fit
+        description: How well the candidate's experience level matches the role
+        options:
+          1: "Significantly under-qualified - 3+ years below requirement"
+          2: "Under-qualified - 1-3 years below requirement"
+          3: "Adequate - Meets minimum requirements"
+          4: "Well-qualified - Exceeds requirements by 1-3 years"
+          5: "Highly qualified - Significantly exceeds with relevant experience"
+      
+      - name: education_match
+        description: How well the candidate's education aligns with the role
+        options:
+          1: "Does not meet educational requirements"
+          2: "Partially meets educational requirements"
+          3: "Meets basic educational requirements"
+          4: "Exceeds educational requirements"
+          5: "Exceptional educational background for the role"
+      
+      - name: overall_fit
+        description: Overall assessment of candidate-job fit
+        options:
+          1: "Not Recommended - Poor fit, significant gaps"
+          2: "Weak Candidate - Below average fit, notable concerns"
+          3: "Moderate Candidate - Average fit, could work with development"
+          4: "Strong Candidate - Good fit, minor gaps only"
+          5: "Excellent Candidate - Outstanding fit, highly recommended"
+
+  - name: hiring_recommendation
+    column_type: llm-text
+    model_alias: nvidia-text
+    prompt: |
+      Based on the comprehensive analysis, provide a brief hiring recommendation.
+      
+      Candidate: {{ candidate_name }}
+      Position: {{ seniority_level }} {{ job_title }}
+      
+      Match Scores:
+      - Skills Alignment: {{ match_quality_score['skills_alignment']['score'] }}/5
+      - Experience Fit: {{ match_quality_score['experience_fit']['score'] }}/5
+      - Education Match: {{ match_quality_score['education_match']['score'] }}/5
+      - Overall Fit: {{ match_quality_score['overall_fit']['score'] }}/5
+      
+      Analysis Summary:
+      {{ match_analysis['overall_assessment'] }}
+      
+      Strengths: {{ match_analysis['strengths'] }}
+      Gaps: {{ match_analysis['gaps'] }}
+      
+      Provide a 2-3 sentence hiring recommendation including:
+      1. Whether to proceed with the candidate (Advance/Hold/Reject)
+      2. Key reason for the decision
+      3. Any specific interview focus areas if advancing
+
+  # ============================================
+  # AGGREGATE SCORES FOR ML TRAINING
+  # ============================================
+
+  - name: skills_score
+    column_type: expression
+    expr: "{{ match_quality_score['skills_alignment']['score'] }}"
+    dtype: int
+
+  - name: experience_score
+    column_type: expression
+    expr: "{{ match_quality_score['experience_fit']['score'] }}"
+    dtype: int
+
+  - name: education_score
+    column_type: expression
+    expr: "{{ match_quality_score['education_match']['score'] }}"
+    dtype: int
+
+  - name: overall_score
+    column_type: expression
+    expr: "{{ match_quality_score['overall_fit']['score'] }}"
+    dtype: int
+
+  - name: composite_score
+    column_type: expression
+    expr: "{{ ((skills_score * 0.35) + (experience_score * 0.30) + (education_score * 0.15) + (overall_score * 0.20)) | round(2) }}"
+    dtype: float
+
+  - name: match_label
+    column_type: expression
+    expr: "{% if composite_score >= 4.0 %}Strong Match{% elif composite_score >= 3.0 %}Moderate Match{% elif composite_score >= 2.0 %}Weak Match{% else %}Poor Match{% endif %}"
+    dtype: str
+
+  - name: interview_decision
+    column_type: expression
+    expr: "{% if overall_score >= 4 %}Advance to Interview{% elif overall_score == 3 %}Hold for Review{% else %}Reject{% endif %}"
+    dtype: str
+
+  # ============================================
+  # METADATA
+  # ============================================
+
+  - name: posting_date
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2024-01-01"
+      end: "2025-12-31"
+      unit: D
+
+  - name: application_date
+    column_type: sampler
+    sampler_type: datetime
+    params:
+      start: "2024-01-15"
+      end: "2026-01-15"
+      unit: D
