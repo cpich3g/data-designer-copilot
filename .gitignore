@@ -38,8 +38,9 @@ env/
 # Jupyter Notebook
 .ipynb_checkpoints/
 
-# Data artifacts (keep YAML configs, ignore generated CSVs)
-artifacts/*.csv
+# Data artifacts
+artifacts/
+*.csv
 *.json
 !examples/*.json
 
