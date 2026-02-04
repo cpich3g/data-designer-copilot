@@ -39,7 +39,7 @@ env/
 .ipynb_checkpoints/
 
 # Data artifacts
-artifacts/
+# artifacts//
 *.csv
 *.json
 !examples/*.json

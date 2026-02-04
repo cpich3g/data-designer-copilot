@@ -1,0 +1,108 @@
+# Old Assyrian Commercial Text Generation
+# Generates synthetic transliterations and translations similar to train.csv
+# Based on Old Assyrian merchant texts (c. 1950-1700 BCE)
+
+model_configs:
+  - alias: nvidia-text
+    model: nvidia/llama-3.3-nemotron-super-49b-v1.5
+    inference_params:
+      temperature: 0.7
+      max_tokens: 1024
+
+columns:
+  # Unique identifier for each text
+  - name: oare_id
+    column_type: sampler
+    sampler_type: uuid
+
+  # Document type category (used for generation, dropped from output)
+  - name: document_type
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - debt_contract
+        - letter
+        - receipt
+        - witness_list
+        - trade_agreement
+        - legal_dispute
+      weights: [3, 3, 2, 1, 2, 1]
+    drop: true
+
+  # Subject matter of the text (used for generation, dropped from output)
+  - name: subject
+    column_type: sampler
+    sampler_type: category
+    params:
+      values:
+        - silver_debt
+        - textile_trade
+        - copper_transaction
+        - tin_trade
+        - donkey_caravan
+        - warehouse_storage
+        - family_business
+        - legal_testimony
+      weights: [3, 3, 2, 2, 2, 1, 1, 1]
+    drop: true
+
+  # Generate the Old Assyrian transliteration
+  - name: transliteration
+    column_type: llm-text
+    model_alias: nvidia-text
+    system_prompt: |
+      You are an expert Assyriologist specializing in Old Assyrian (c. 1950-1700 BCE) cuneiform texts from Kaneš/Kültepe.
+      
+      CRITICAL: Output ONLY the transliteration text itself. Do NOT include <think> tags, reasoning, planning, or any explanation. Just produce the raw transliteration directly.
+      
+      Generate authentic Old Assyrian commercial texts in standard transliteration format following these conventions:
+      
+      TRANSLITERATION RULES:
+      - Use standard Assyriological diacritics: š, ṣ, ṭ, ḫ (not h), ā, ē, ī, ū
+      - Use subscript numbers for sign variants: a, a₂, a₃ or bi₄, bi₅
+      - Separate syllables with hyphens: a-na, um-ma, KÙ.BABBAR
+      - Use Sumerograms in capitals: DUMU (son), KÙ.BABBAR (silver), KÙ.GI (gold), URUDU (copper), AN.NA (tin), TÚG (textile), ANŠE (donkey), É (house), ITU.KAM (month), GÍN (shekel), ma-na (mina), GÚ (talent)
+      - Use IGI for "witnessed by", KIŠIB for "seal of"
+      - Common expressions: um-ma X-ma (thus X says), a-na X qí-bi-ma (say to X), i-ṣé-er (owes to), i-šu (he has/owes), ṣa-ru-pá-am (refined), iš-tù (from), a-na (to/for)
+      
+      COMMON FORMULAS:
+      - Letter opening: um-ma [sender]-ma a-na [recipient] qí-bi-ma
+      - Debt formula: X GÍN/ma-na KÙ.BABBAR i-ṣé-er [debtor] [creditor] i-šu
+      - Payment clause: a-na Y ḫa-am-ša-tim i-ša-qal (he will pay in Y weeks)
+      - Interest clause: šu-ma lá iš-qú-ul X GÍN.TA ṣí-ib-tám ú-ṣa-áb (if not paid, adds X shekels interest)
+      - Witness: IGI [name] DUMU [father's name]
+      
+      PERSONAL NAMES (use these):
+      - Aššur-nādā, Puzur-Aššur, Šalim-Aššur, Ennam-Aššur, Iddin-abum, Ikūn-pīya
+      - Ilī-bāni, Šu-Ištar, Enna-Suen, Dan-Aššur, Lamassī, Ištar-lamassī
+      
+      Generate ONLY the transliteration, no translation or explanation.
+    prompt: |
+      Generate an authentic Old Assyrian {{ document_type }} text about {{ subject }}.
+      
+      The text should be 3-8 lines long in transliteration format.
+      Include realistic amounts (silver in shekels/minas, textiles in pieces).
+      Use period-appropriate names and formulas.
+
+  # Generate the English translation
+  - name: translation
+    column_type: llm-text
+    model_alias: nvidia-text
+    system_prompt: |
+      You are an expert Assyriologist who translates Old Assyrian texts to English.
+      
+      CRITICAL: Output ONLY the English translation. Do NOT include <think> tags, reasoning, planning, or any explanation. Just produce the translation directly.
+      
+      Provide accurate, scholarly translations with standard conventions:
+      - "X owes Y to Z" for debt statements
+      - Preserve proper names
+      - Use "shekels", "minas", "talents" for weights
+      - Include uncertainties in square brackets [...]
+      - Keep the formal register of commercial/legal documents
+    prompt: |
+      Translate this Old Assyrian transliteration to English:
+      
+      {{ transliteration }}
+      
+      Provide only the English translation, no commentary.
