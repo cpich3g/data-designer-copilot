@@ -1,0 +1,1803 @@
+The aim is to build the best dataset using train.csv as the base for Machine Translation training of Byt5 model for a ultra low resource language - Old Assyrian (Akkadian) to English. 
+Datasets provided with Info (https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/data):
+The competition data comprises transliterations of over 8,000 Old Assyrian cuneiform texts with a comprehensive set of metadata. We provide aligned English translations for a subset of these. We also provide unprocessed texts from almost 900 scholarly publications containing more translations from which you may attempt to create additional training data.
+See also the Dataset Instructions for more on the formatting conventions used in these transliterations.
+Please note that this is a Code Competition. The data in test.csv is only dummy data to help you author your solutions. When your submission is scored, this example test data will be replaced with the full test set.
+File and Field Information
+train.csv - About 1500 transliterations of Old Assyrian texts from the original excavated tablets each with a translation into English.
+oare_id - Identifier in the Old Assyrian Research Environment (OARE) database. Uniquely identifies each text.
+transliteration - An Akkadian transliteration of the original tablet text.
+translation - A corresponding English translation.
+test.csv - A small example set representative of the test data. When your submission is scored, this example test data will be replaced with the full test set. There are about 4000 sentences in the test data from about 400 unique documents. Note that while the training data has translations aligned at the document level, the test data has translations aligned at the sentence level.
+id - A unique identifier for each sentence.
+text_id - A unique identifier for each document.
+line_start, line_end - Denotes the boundaries of the sentence within the original tablet. Orders the sentences within the document. Note that this field has str type with values like 1, 1', or 1''. See the note on line numbers under Modern Scribal Notations in the Dataset Instructions.
+transliteration - An Akkadian transliteration of the original tablet text. Your goal is to produce the corresponding translation.
+sample_submission.csv - A sample submission file in the correct format. See the Evaluation page for more details.
+Supplemental Data
+published_texts.csv - About 8,000 transliterations of Old Assyrian texts together with metadata fields and catalog information from database and museum records as published in the OARE database. You may use these identifiers to retrieve additional information from the linked websites. These transliterations are not provided with translations.
+oare_id - Identifier in the OARE database, as in train.csv.
+online transcript - URL of the transliteration transcript hosted on the DPI website.
+cdli_id - Identifier in the CDLI website. Multiple IDs are separated by bar |.
+aliases - Other published labels for the text (e.g. publication numbers, museum IDs, etc.). Multiple IDs are separated by bar |.
+label - Primary designation as a label of the text.
+publication_catalog - Labels of the text found in publications and museum records. Multiple IDs are separated by bar |.
+description - Basic description of the text.
+genre_label - Basic genre assigned to the text. Not available for all texts.
+inventory_position - Label of the text as found in the museum. Multiple IDs are separated by bar |.
+online_catalog - URL of the Yale collection with CC-0 metadata and images.
+note - Notes made by specialists for commentary or translations.
+interlinear_commentary - References to publications which discuss the text at specific lines.
+online_information - URL of the text in the British Museum (note these images are copyright of the British Museum, not in CC). Not available for all texts.
+excavation_no - Identifier assigned to the text from the excavation.
+oatp_key - Identifier assigned by the Old Assyrian Text Project.
+eBL_id - Identifier in the eBL website.
+AICC_translation - URL of the first published online machine translation. Note that most of these translations are very poor quality.
+transliteration_orig - Original text transliteration from the OARE database.
+transliteration - Clean version of the text transliteration based on these formatting suggestions.
+publications.csv - Contains the raw text of about 880 scholarly publications containing translations from Old Assyrian into multiple modern languages. The texts were produced via OCR with LLM postprocessing. You may attempt to extract these translations and align them with the transliterations in published_texts.csv. Note that the translations often are given in a language other than English.
+pdf_name - The name of the PDF file from which the text was extracted.
+page - The page number where the given text occured.
+page_text - The text of the article itself.
+has_akkadian - Whether or not the text contains Akkadian transliterations.
+bibliography.csv - Bibliographic data for the texts in publications.csv.
+pdf_name - An ID corresponding to that in publications.csv.
+title, author, author_place, journal, volume, year, pages - Standard bibliographic data.
+OA_Lexicon_eBL.csv - This file contains a list of all the Old Assyrian words in transliteration with their lexical equivalents (that is, how they are found in a dictionary). The links included are to an online Akkadian dictionary hosted by LMU, the electronic Babylonian Library (eBL).
+type - Type of word (e.g. word, PN = person name, GN = geographic name).
+form - String-literal word, as found in transliteration.
+norm - Normalized form, with hyphens removed and vowel length indications.
+lexeme - Lemmatized form, as found in a dictionary.
+eBL - URL of the online dictionaries in the electronic Babylonian Library (eBL).
+I_IV - Roman numeral designation of the homonym lexemes, corresponding to the Concise Dictionary of Akkadian (CDA) found in the eBL.
+A_D - Alphabetic designation of the homonym lexemes, corresponding to the Chicago Assyrian Dictionary.
+Female(f) - Designation for female gender.
+Alt_lex - Alternative normalizations.
+eBL_Dictionary.csv - The complete dictionary of Akkadian words from the eBL database. It collects the data provided by the URLs at eBL in the OA_Lexicon_eBL.csv file.
+resources.csv - A list of resources that might be used for additional data.
+Sentences_Oare_FirstWord_LinNum.csv - An aid to aligning translations at the sentence level for the data in train.csv. Indicates the first word of each sentence and its location on the tablet.
+Suggested Workflow for Building Additional Training Data
+The publications.csv file contains OCR output from almost 900 PDFs, and extracting the translations from these texts is an essential first step. Before any machine learning can happen, the training data needs to be reconstructed and aligned. Here’s a simple path you can follow:
+Locate each text and its translation: Use the document identifiers (IDs, aliases, or museum numbers) to match transliterations with their corresponding translations in the OCR output.
+Convert all translations to English: The source translations may appear in multiple languages (e.g., English, French, German, Turkish). For consistency, convert everything to English.
+Create sentence-level alignments: Break both the Akkadian transliteration and the matching English translation into sentences and align them pairwise. This sentence-level mapping is the most useful format for training and evaluating machine translation models.
+Once these steps are completed, you’ll have a clean, aligned dataset ready for machine learning.
+Bibliography
+The bibliography reflects the secondary sources we used to retrieve the translations for the challenge. Because they are held in different copyrights, we suggest each work should be cited if they were used when generating machine translations.
+Additional bibliography citations for the primary sources can be found here:
+https://cdli.earth/publications
+https://cdli.ox.ac.uk/wiki/abbreviations_for_assyriology
+
+Aim of the Competition (gain highest lb score on Kaggle):
+The Deep Past Challenge asks a bold question: Can AI decode 4,000-year-old business records?
+In this competition, you will help decode the everyday business records of ancient Assyrian merchants. Using data from 8,000 cuneiform texts, your goal is to build a translation system for Old Assyrian. Thousands more like them lie unread in museum drawers around the world.
+Your work can help bring their voices back into the story of humanity.
+
+Four thousand years ago, Assyrian merchants left behind one of the world’s richest archives of everyday and commercial life. Tens of thousands of clay tablets record debts settled, caravans dispatched, and discuss day-to-day family matters. Today, half of these tablets remain silent, not because they’re damaged, but because so few people can read the language pressed into their clay. Many have sat untranslated in museum drawers for more than a century.
+
+The Deep Past Challenge turns this ancient mystery into a modern machine-learning problem by inviting competitors to help unlock the largest untranslated archive of the ancient world. We invite you to build translation models for Old Assyrian cuneiform tablets: Bronze Age texts that have sat unread in museum collections for over a century. Old Assyrian—the dialect used on these tablets—is an early form of Akkadian, the oldest documented Semitic language.
+
+Nearly twenty-three thousand tablets survive documenting the Old Assyrian trading networks that connected Mesopotamia to Anatolia. Only half have been translated, and less than a dozen scholars in the world are specialized to read the rest.
+
+These aren’t the polished classics of Greece and Rome, curated and copied by scribes who chose whose voices survived. These are unfiltered, straight from the people who wrote them: letters, invoices and contracts written on clay by ancient merchants and their families. They’re the Instagram stories of the Bronze Age: mundane, immediate, and breathtakingly real.
+
+Your task is to build neural machine-translation models that convert transliterated Akkadian into English. The challenge: Akkadian is a low-resource, morphologically complex language where a single word can encode what takes multiple words in English. Standard architectures built for modern, data-rich languages fail here. Crack this problem and you’ll give voice to 10,000+ untranslated tablets. And you'll do more than revive the past: you'll help pioneer a blueprint for translating the thousands of endangered and overlooked languages—ancient and modern—that the AI age has yet to reach.
+
+Visit this website to learn more about the organizing team, the Deep Past Initiative, and to find more background materials.
+
+Evaluation
+Submissions are evaluated by the Geometric Mean of the BLEU and the chrF++ scores, with each score's sufficient statistics being aggregated across the entire corpus (that is, each score is a micro-average).
+
+You may refer to the SacreBLEU library for implementation details. A notebook implementing the metric on Kaggle may be found here: Geometric Mean of BLEU and chrF++.
+
+Submission File
+For each id in the test set, you must predict an English translation of the associated Akkadian transliteration. Each translation should comprise a single sentence. The file should contain a header and have the following format:
+
+id,translation
+0,Thus Kanesh, say to the -payers, our messenger, every single colony, and the...
+1,In the letter of the City (it is written): From this day on, whoever buys meteoric...
+2,As soon as you have heard our letter, who(ever) over there has either sold it to...
+3,Send a copy of (this) letter of ours to every single colony and to all the trading...
+...
+
+Submissions to this competition must be made through Notebooks. In order for the "Submit" button to be active after a commit, the following conditions must be met:
+
+CPU Notebook <= 9 hours run-time
+GPU Notebook <= 9 hours run-time
+Internet access disabled
+Freely & publicly available external data is allowed, including pre-trained models
+Submission file must be named submission.csv
+Please see the Code Competition FAQ for more information on how to submit. And review the code debugging doc if you are encountering submission errors.
+Dataset Instructions
+By far the biggest challenge in working with Akkadian / Old Assyrian texts is dealing with the formatting issues. As they say, “garbage in, garbage out” and unfortunately, the format of text in transliteration poses challenges at each step of the ML workflow, from tokenization to the transformation and embedding process.
+
+To mitigate these issues, we provide the following information and suggestions in handling the different formatting challenges in both the transliterated and translated texts.
+
+Texts in Transliteration
+Main formatting challenges: in addition to the standard transliteration format, with hyphenated syllables, additional scribal additions have encumbered the text with superscripts, subscripts, and punctuations only meaningful to specialists in Assyriology (Complete Transliteration Conversion Guide).
+Capitalization is also a challenge, as it encodes meaning in two different ways. When the first letter of a word is capitalized it implies the word is a personal name or a place name (i.e. proper noun). When the word is in ALL CAPS, that implies it is a Sumerian logogram and was written in place of the Akkadian syllabic spelling for scribal simplicity.
+Determinatives are used in Akkadian as a type of classifier for nouns and proper nouns. These signs are usually printed in superscript format adjacent to the nouns they classify. To avoid the potential confusion of reading a determinative sign as part of a work, we have followed the standard transliteration guide and retained curly brackets around these. While this may pose challenges in ML, we note that this is the only use of curly brackets in the transliteration (e.g. a-lim{ki}, A-mur-{d}UTU).
+Broken text on the tablet: as these are ancient texts, they include a number of breaks and lacunae. In order to standardize these breaks, we suggest using only two markers, one for a small break of a single sign <gap> and the other for more than one sign up to large breaks <big_gap>.
+For the purpose of this challenge, we include suggestions of how best to handle these formatting issues below.
+Texts in Translation
+There is currently no complete or extensive database for translations of ancient cuneiform documents, and this is especially true for the Old Assyrian texts. For this reason, we gathered together the books and articles with the translations and commentaries of the Old Assyrian texts and we digitized them with an OCR and LLM for corrections. Even after all that work, there are still a number of formatting issues with these translations, which makes this a central component of the challenge for successful machine translation development.
+
+Translations usually retain the same proper noun capitalization, and these proper nouns in general are where most ML tasks underperform. To account for these issues, we have included a lexicon in the dataset which includes all the proper nouns as specialists have normalized them for print publications.
+
+Modern Scribal Notations
+Lastly, it is important to note that there are modern scribal notations that accompany the text in transliteration and translation. The first of these include line numbers. These are typically numbered 1, 5, 10, 15, etc. However, if there are any broken lines, the line numbers will have an apostrophe immediately following (‘), and if there is a second set of broken lines, the line numbers will have two trailing apostrophes (‘’). These are not quotation marks, but a scribal convention editors sometimes use in publication.
+
+Additional scribal notations include:
+
+Exclamation marks when a scholar is certain about a difficult reading of a sign !
+Question mark when a scholar is uncertain about a difficult reading of a sign ?
+Forward slash for when the signs belonging to a line are found below the line /
+Colon for the Old Assyrian word divider sign :
+Comments for breaks and erasures in parentheses ( )
+Scribal insertions when a correction is made in pointy brackets < >
+The demarcation of errant or erroneous signs in double pointy brackets << >>
+Half brackets for partially broken signs ˹ ˺
+Square brackets for clearly broken signs and lines [ ]
+Curly brackets for determinatives (see below) { }
+Formatting Suggestions for Transliterations and Translations:
+Remove (modern scribal notations):
+! (certain reading)
+? (questionable reading)
+/ (line divider)
+: OR . (word divider)
+< > (scribal insertions, but keep the text in translit / translations)
+˹ ˺ (partially broken signs, to be removed from transliteration)
+[ ] (remove from document level transliteration. e.g. [KÙ.BABBAR] → KÙ.BABBAR)
+Replace (breaks, gaps, superscripts, subscripts):
+[x] <gap>
+… <big_gap>
+[… …] <big_gap>
+ki {ki} (see full list below)
+il5 il5 (same for any subscripted number)
+Additional Characters & Formats (you may encounter):
+Character	CDLI	ORACC	Unicode
+á	a2	a₂	
+à	a3	a₃	
+é	e2	e₂	
+è	e3	e₃	
+í	i2	i₂	
+ì	i3	i₃	
+ú	u2	u₂	
+ù	u3	u₃	
+š	sz	š	U+161
+Š	SZ	Š	U+160
+Ṣ	s,	ṣ	U+1E63
+ṣ	S,	Ṣ	U+1E62
+ṭ	t,	ṭ	U+1E6D
+Ṭ	T,	Ṭ	U+1E6C
+‘	‘	ʾ	U+02BE
+0-9	0-9	subscript ₀-₉	U+2080-U+2089
+xₓ	Xx	subscript ₓ	U+208A
+ḫ	h	h	U+1E2B
+Ḫ	H	H	U+1E2A
+These rows of Ḫ ḫ are here to indicate that training data (and publication data) has Ḫ ḫ but the test data has only H h.
+
+There is only one type of H in Akkadian, so this can be a simple substitution for transliteration text Ḫ ḫ --> H h
+
+Akkadian determinatives in curly brackets:
+{d} = dingir ‘god, deity’ — d preceding non-human divine actors
+{mul} = ‘stars’ — MUL preceding astronomical bodies and constellations
+{ki} = ‘earth’ — KI following a geographical place name or location
+{lu₂} = LÚ preceding people and professions
+{e₂} = {É} preceding buildings and institutions, such as temples and palaces
+{uru} = (URU) preceding names of settlements, such as villages, towns and cities
+{kur} = (KUR) preceding lands and territories as well as mountains
+{mi} = munus (f) preceding feminine personal names
+{m} = (1 or m) preceding masculine personal names
+{geš} / {ĝeš) = (GIŠ) preceding trees and things made of wood
+{tug₂} = (TÚG) preceding textiles and other woven objects
+{dub} = (DUB) preceding clay tablets, and by extension, documents and legal records
+{id₂} = (ÍD) (a ligature of A and ENGUR, transliterated: A.ENGUR) preceding names of canals or rivers or when written on its own referring to the divine river
+{mušen} = (MUŠEN) preceding birds
+{na₄} = (na4) preceding stone
+{kuš} = (kuš) preceding (animal) skin, fleece, hides
+{u₂} = (Ú) preceding plants
+
+Now i am about to share different discussions from Kaggle that are mostly from high scoring users and multiple threads of them interacting (DeepPast user is the admin)
+
+How to handle dot h/H?
+Hi all,
+
+Transliteration normalization is a challenge both train set and test set. I'm entering an endless loop with ḫ and Ḫ 😁
+
+We know that test set contains h and H but not ḫ nor Ḫ
+Our train set (train.csv, same for published_text.csv) contains zero h nor H but many ḫ and Ḫ
+How to manage this headache?
+
+Convert all ḫ / Ḫ into h / H in train set, no changes on test set.
+Keep ḫ / Ḫ in train set, convert h / H to ḫ / Ḫ in test set.
+Try also variants reported here below in test set:
+# H variants
+"h,": "ḫ",
+"H,": "Ḫ",
+".h": "ḫ",
+".H": "Ḫ",
+"hh": "ḫ",
+"HH": "Ḫ",
+
+
+Maybe,At least the characters published by the organizer do not show ḫ and Ḫ. there
+
+MPWARE
+Topic Author
+Posted 17 days ago
+
+· 11th in this Competition
+
+I hope, the allowed chars list has been provided by organizer.
+
+Anil Ozturk
+Posted 20 days ago
+
+· 280th in this Competition
+
+well well well 😄 have you tried any of these options?
+
+MPWARE
+Topic Author
+Posted 21 days ago
+
+· 11th in this Competition
+
+I'm trying all these but no real changes:
+
+Baseline: Keep ḫ / Ḫ in train set, no change on test set: LB=34.0
+Baseline: Keep ḫ / Ḫ in train set, option #3 (H variants) on test set: LB=34.0+
+Baseline: Keep ḫ / Ḫ in train set, option #3 (H variants) + convert remaining h / H to ḫ / Ḫ in test set: LB=34.0-
+Baseline: Keep ḫ / Ḫ in train set, convert h / H to ḫ / Ḫ in test set: LB=34.0--
+Retrain: Convert all ḫ / Ḫ into h / H in train set, no changes on test set: LB=33.5
+Last one sounds interesting but I believe it looses information because LB drops a bit. I think there is no "plain h" in the Akkadian language. Experiment#2 with the H variant alone looks better but we would need to know if the transliteration normalization converts Ḫ into .H or H, or H @deeppast ?
+
+MPWARE
+Topic Author
+Posted 19 days ago
+
+· 11th in this Competition
+
+@deeppast Any information about your dot h/H transliteration normalization would help. Let's us know if you can provide it. Thanks a lot.
+
+
+Jack
+Posted 19 days ago
+
+· 2nd in this Competition
+
+Is this saying that keeping the ḫ / Ḫ makes your score 0.5 better?
+
+
+MPWARE
+Topic Author
+Posted 19 days ago
+
+· 11th in this Competition
+
+Currently I keep ḫ / Ḫ as is in the training set knowing that they do not exist in test set and it looks better than replacing them by h / H (but it was on a single submission).
+
+Jack
+Posted 18 days ago
+
+· 2nd in this Competition
+
+Are you leaving anything else? I've spent countless hours going through this data and reading the competition recommendations only to make changes and see reduced performances.. I'd be curious to know how you're handling punctuation, fractions, and the text within angled brackets/parenthesis for the train.csv data. My recent experiments are definitely not giving outcomes I'd expect
+
+DeePast Post:
+Two practical stumbling blocks in Akkadian → English MT (and how to address them)
+Based on recent experiments and discussions with several participants, I want to share a set of observations about what appear to be the primary bottlenecks in this competition. These are not model-architecture issues per se, but data- and representation-level issues that strongly affect downstream training, evaluation, and reinforcement learning.
+
+After multiple iterations, debugging sessions, and failed-but-informative experiments, two main stumbling blocks consistently emerge:
+
+(1) Named entities (personal names, place names, divine names) (2) Inconsistent ASCII / transliteration formats across Akkadian datasets
+
+Both issues disproportionately affect tokenization, alignment, and reward stability, and in practice they limit performance more than model size or optimizer choice.
+
+1. Named entities are a dominant source of error
+Personal names, geographic names, and divine names behave very differently from ordinary lexical items:
+
+They are often transliterated inconsistently across editions.
+They frequently preserve older orthographic conventions.
+They are semantically opaque to the model unless explicitly supported.
+In experiments, many otherwise reasonable translations fail almost entirely because a name is mangled, dropped, or hallucinated. This affects not only final accuracy but also reward-based methods, where small orthographic deviations can collapse a sentence-level score.
+
+To address this, I have prepared an onomasticon (a curated list of names and attested spellings), which I will share as supplemental data. Participants may find it useful to:
+
+add it as a lookup or constraint layer,
+bias decoding for known names,
+or use it for post-generation repair.
+Even partial normalization of named entities tends to improve both perceived translation quality and metric stability.
+
+2. Transliteration format normalization is not optional
+A second, and often underestimated, issue is ASCII-format variation in Akkadian transliteration. Different corpora encode the same underlying text using different conventions, many of which are not interchangeable without loss.
+
+A concrete example that came up in a private discussion illustrates the problem. One approach converted diacritics into ASCII sequences (e.g., š → sz, ú → u2, etc.) before training. This is a reasonable instinct, but in this case it was done in the wrong direction: the evaluation data already contains diacritics, and reducing the alphabet removed distinctions that are semantically meaningful in Akkadian.
+
+For example, the evaluation data expects forms like:
+
+i-ṣí-ba-at rather than i-Si₂-ba-at
+KÙ-pì-a rather than KU₃-pi₃-a
+KIŠIB rather than KISZIB
+The key takeaway is that the competition data uses an extended alphabet by design, and collapsing it into ASCII can degrade both meaning and alignment. While this increases tokenization difficulty, preserving distinctions such as s / ṣ / š and t / ṭ is preferable to losing them.
+
+The recommended strategy is therefore:
+
+keep diacritics,
+convert ASCII substitutes (e.g., sz) into diacritics,
+and normalize everything toward the format used in the training and evaluation sets.
+Gaps, damage markers, and parallel alignment
+Another recurring source of confusion concerns damaged text and gap markers. In the data:
+
+x represents a single broken sign,
+sequences like x x x x represent a larger lacuna.
+For modeling purposes:
+
+a single x should be normalized to <gap>,
+multiple consecutive x tokens should be collapsed into a single <big_gap>.
+Crucially, these gap markers should be parallelized between transliteration and translation whenever possible. If a large gap appears in one side but not the other, the model is forced to learn misalignment rather than translation. In practice, collapsing combinations such as <gap> <big_gap> or <big_gap> <gap> into a single <big_gap> on both sides improves sentence-level alignment and reduces noise.
+
+This also applies to edge cases such as <gap> attached to a word (e.g., <gap>-A-šùr), which should be preserved rather than blindly removed.
+
+Why this matters for training and RL-based methods
+Many participants have observed that standard supervised fine-tuning produces reasonable loss curves, while reinforcement or preference-based methods fail to improve or show no reward signal. In nearly all cases examined so far, this traces back to output non-conformance caused by the issues above.
+
+If the model is penalized for:
+
+orthographic mismatches,
+bracket artifacts,
+inconsistent gap handling,
+or malformed named entities,
+then reward functions cannot reliably distinguish “closer” from “farther” outputs. Addressing normalization and alignment first makes rewards smoother and learning signals usable.
+
+Closing note
+None of this is meant as criticism of existing approaches; these are difficult problems, and much of the complexity comes from the philological nature of the data itself. The hope in sharing this publicly is to reduce duplicated effort and make preprocessing choices more transparent across submissions.
+
+I will continue to share supplemental resources (including the onomasticon) as they are finalized, and I’m happy to discuss normalization or alignment strategies further if helpful to others.
+
+
+Anil Ozturk
+Posted 25 days ago
+
+· 280th in this Competition
+
+I want to be sure on these cases:
+
+<big_gap> <gap> → <big_gap>
+<gap> <big_gap> <gap> → <big_gap>
+<big_gap> <big_gap> → <big_gap>
+<gap> <gap> → <big_gap>
+someword-<gap> <gap>-someword → someword-<gap> <gap>-someword OR someword-<big_gap>-someword ?
+<big_gap> <gap>-A-šùr → <big_gap> <gap>-A-šùr
+xxxx-kam (train.csv line 43) → <big_gap>-kam OR <big_gap> <gap>-kam ?
+It would be good to take feedback on these from you.
+
+I think that having to figure out the normalization logic you are using prevents us from focusing on the actual goal of the competition. There is some processing happening in the background that also affects the original “ground truth” translations you have, so instead of focusing on the machine learning part we end up spending our effort on reverse-engineering your normalization logic. Can't you share the transliteration-translation preprocessors you're using?
+
+MPWARE
+Posted 25 days ago
+
+· 11th in this Competition
+
+I'm wondering how to interpret this section that is unclear to me about "?", "!", and ":" for translations :
+
+https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/overview/dataset-instructions
+
+Formatting Suggestions for Transliterations and Translations:
+
+Remove (modern scribal notations):
+
+! (certain reading)
+? (questionable reading)
+/ (line divider) - Now we now there is none of these according to @deeppast
+: OR . (word divider)
+We've a lot of ?!: in training set translations. But do we have the same in test set?
+
+Should we apply the suggestion above => Remove all !?: from translations in training set. Or only if they are enclosed with parenthesis.
+
+Some make sense to me with ":" usage for a rate and "?" for a question in translation. It does not look questionable reading for the question marks below.
+
+ff9442fd-9e7d-449c-a2d6-0cc35921cd65: Šalim-Aššur answered: "And what if I have tin and from my goods remaining in his possession? Will he pay me at the rate 6:1 for my tin and 15 shekels per in silver?"
+
+Here the ":" make sense too. If I remove ":" then I should remove ";" too here.
+
+00f0d841-eb7a-46f8-86fc-bf9fd7d52cbf: From Šu-Tammuzī, Elaya, Ennam-Aššur and Lamassī to Ennam-Aššur and Ali-ahum: In accordance with your missive we have hired a attorney for you; Abiya son of Bebe is our attorney.
+
+I would just remove things like: "(?)", "(!)", "(fem. plur.)", "(fem.)", "(plur.)", "(pl.)", "(sing.)", "(plural)"
+
+Can't you share the transliteration and translation list of characters you're using / allowing?
+
+
+DeepPast
+Competition Host
+Posted 24 days ago
+
+Good questions, here's the character list for transliterations:
+
+Transliterations Characters
+
+-
+a
+A
+i
+I
+u
+U
+m
+M
+š
+Š
+n
+N
+b
+B
+r
+R
+t
+T
+l
+L
+k
+K
+G
+g
+í
+Í
+D
+d
+Ù
+ù
+á
+Á
+.
+ú
+Ú
+p
+P
+e
+E
+h
+H
+q
+Q
+1
+ṣ
+Ṣ
+é
+É
+<
+>
+à
+À
+4
+z
+Z
+s
+S
+ì
+Ì
+5
+_
+2
+0
+½
+w
+W
+3
+{
+}
+ṭ
+Ṭ
+6
+⅓
+8
+⅔
+7
+è
+È
+⅚
+9
+¼
+!
++
+⅙
+ı
+…
+ş
+İ
+:
+Translations Characters
+
+'
+?
+e
+E
+a
+A
+i
+I
+t
+T
+n
+N
+s
+S
+o
+O
+r
+R
+l
+L
+h
+H
+u
+U
+m
+M
+d
+D
+F
+f
+š
+Š
+-
+p
+P
+w
+W
+b
+B
+g
+G
+y
+Y
+.
+K
+k
+,
+C
+c
+v
+ā
+1
+)
+(
+<
+>
+z
+Z
+_
+Q
+q
+2
+ī
+ṭ
+Ṭ
+0
+:
+3
+½
+5
+;
+x
+ē
+4
+ū
+6
+ṣ
+Ṣ
+⅓
+8
+’
+!
+7
+j
+J
+⅔
+“
+”
+9
+–
+⅚
+¼
+⅙
+"
+‘
+ı
+—
+[
+]
+ğ
+â
++
+à
+ş
+
+steubk
+Posted 24 days ago
+
+· 17th in this Competition
+
+did you actually publish the test set in plain chars ? 🧐
+
+Angantyr
+Posted 24 days ago
+
+The frequency counts are the same for upper and lower case -- the counter looks like it's case-insensitive. Is it intentional?
+
+
+耶✌
+Posted 24 days ago
+
+· 40th in this Competition
+
+I have the same confusion, but I’ve been submitting consistently to check if the LB score improves. I can now say it helps – after fixing a lot of formatting issues, my LB score has gone up to 32.3.Happy new year!
+
+
+
+MPWARE
+Posted 23 days ago
+
+· 11th in this Competition
+
+Thanks, it helps a lot @deeppast
+
+The only thing that looks like a bit weird is the frequency count:
+
+Top # 2 does not seem possible. ' => 1651390 ? => 181474. It means most of the text is a quote.
+Upper/lower case have the same count
+I believe your top #2 is something else and ? is not a real question mark but one or more characters that has been lost during counting or copy/paste or an intermediate sum/index.
+
+DeepPast
+Competition Host
+Posted 23 days ago
+
+Thanks, yes those numbers were way off, the formula I used was wrong. I'll see if I can get the right counts, but at least the character set should help.
+
+
+DeepPast
+Competition Host
+Posted 23 days ago
+
+these are all unicode characters (UTF-8)
+
+
+Wisdom Aduah
+Posted 18 days ago
+
+· 544th in this Competition
+
+Does the translation character list apply to the target test translations, or it only applies to the train translations? Specifically, do you expect our generated translations to use unicode fractions (e.g., ¼) or normal texts (e.g., 1/4)?
+
+
+nofreewill42
+Posted 17 days ago
+
+· 972nd in this Competition
+
+I suppose this is the hidden test set, right? Are there missing characters because the data source for it is different, or it just happened to be this way because of the random split got it this way (I doubt it)? If the data source is different, are there other such crucial characteristic differences that we should know of? Is public set a subset of the hidden test set?
+
+
+DeepPast
+Competition Host
+Posted 17 days ago
+
+Yes, that's correct. The test set wasn't in an online database for starters. I realize these formatting issues are frustrating, but our long-term hope is that the resulting MT model will be able to handle these different formatting differences, and not just overfit on the test set. For this reason the 8k published texts were provided to give a larger sample of these different formats.
+
+It's worth mentioning here that the other databases out there (e.g. CDLI, ORACC, eBL, Archibab) also have different transliteration formats. It is perhaps too ambitious to hope that all of these formats can be harmonized at this time / for this challenge, but it is a long-term goal within my research.
+
+
+nofreewill42
+Posted 17 days ago
+
+· 972nd in this Competition
+
+Yeah it is annoying but I also understand that there is no hard standardized format.. Thank you a lot for your response!
+
+
+Jovan Drenovcanin
+Posted 16 days ago
+
+· 486th in this Competition
+
+@deeppast In the list of allowed characters above, in the transliterations part, there is a symbol "…" at the very end. Shouldn't this be converted to ?
+
+Angantyr
+Posted 4 days ago
+
+Transliterations Characters
+!+-.0123456789:<>ABDEGHIKLMNPQRSTUWZ_abdeghiklmnpqrstuwz{}¼½ÀÁÈÉÌÍÙÚàáèéìíùúİışŠšṢṣṬṭ…⅓⅔⅙⅚
+
+Translations Characters
+!"\'()+,-.0123456789:;<>?ABCDEFGHIJKLMNOPQRSTUWYZ[]_abcdefghijklmnopqrstuvwxyz¼½àâāēğīışŠšūṢṣṬṭ–—‘’“”⅓⅔⅙⅚
+
+(Characters sorted for brevity and a better view)
+
+@deeppast
+
+I wanted to come back to this as new question appeared regarding the character set.
+
+Several of those characters do not appear in the train.csv or are extremely rare and I'd like to know more on how to handle those cases, as it appears the normalization steps needed may affect scoring.
+
+Unknown special characters (şİıâ)
+Conversing with Gemini gave me the following clues:
+
+ş = ṣ (used in older publications)
+İ = I (Uppercase i written with dot - typical for Turkish sources)
+ı = i (Lowercase i but dotless - typical for Turkish sources)
+Not normalized characters (…:!{})
+As per Formatting suggestions for Transliterations and Translations we should treat these as artifacts from the normalization process:
+
+… - replace with <big_gap>
+: - replace with a dot (.)
+! - remove (scribal note for certain reading of a sign)
+{} - replaces () determinatives (predominant use in train.csv and OA_lexicon.eBL.csv)
+Same fractions (¼½⅓⅔⅙⅚) in transliterations/translations
+This strongly suggests that at least part of the translations do not recalculate the fractions, i.e., 1.83333 ma-na 3.5 GÍN becomes 1⅚ ma-na 3½ GÍN in test but becomes 1⅚ mina 3½ shekels while in train.csv it is recalculated to 1 mina 56.5 shekels (1 mina 56½ shekels with Unicode fraction notation).
+
+Should we retain the fractions as they are in the transliterations or should we recalculate them?
+
+Translation characters àâğ\'()‘’“”
+à = ā ?
+â = ā ?
+ğ = g ?
+\ - a line divider (remove), alternative reading?
+' - glottal stop?
+() - additional information, e.g. (fem. plur.)
+‘’ - should be standardized to ''?
+“” - should be standardized to ""?
+
+From my LB results, not merging <gap> <big_gap>performs a bit better.
+
+
+DeepPast
+Competition Host
+Posted 24 days ago
+
+Yes, sorry for the confusion. Here's what I have found in terms of co-occurrances of gaps with frequency counts.  P.S. This is not an exhaustive list, but a representative one.
+
+
+Anil Ozturk
+Posted 24 days ago
+
+· 280th in this Competition
+
+You said
+
+In practice, collapsing combinations such as <gap> <big_gap> or <big_gap> <gap> into a single <big_gap> on both sides improves sentence-level alignment and reduces noise.
+
+but the list you shared includes non-merged combinations.
+
+
+Angantyr
+Posted 24 days ago
+
+While analysing the sentence mismatch discussed in a parallel thread I found that in some transliterations (2 broken lines) would be space-split and treated as x x x causing a shift.
+
+Targetting <gap>/<big_gap> combinations without the connected ones was a problem of its own and I ended up with this capture pattern from Perplexity:
+
+(?<!\S)<(?:gap|big_gap)>(?!\s?-|\S)(?:\s<(?:gap|big_gap)>(?!\s?-|\S))+
+It worked for me while working on Sentences_Oare_FirstWord_LinNum.csv. I haven't tried it on corrected train.csv yet.
+
+edit: the capture pattern was modified (should have ended with + instead of *)
+
+
+einherjer
+Posted 6 days ago
+
+· 492nd in this Competition
+
+@deeppast so is your statement regarding collapsing gaps (quoted below, from the topic post) still valid?
+
+multiple consecutive x tokens should be collapsed into a single <big_gap>.
+
+
+Angantyr
+Posted 6 days ago
+
+@deeppast so is your statement regarding collapsing gaps (quoted below, from the topic post) still valid?
+
+multiple consecutive x tokens should be collapsed into a single .
+
+Anything in angle brackets becomes invisible when formatted. Better wrap it in single backticks, e.g., <big_gap>
+
+As for the two questions you posed here:
+
+Both of these can be found: someword-< gap > < gap >-someword AND someword-< big_gap >-someword
+xxxx-kam → < big_gap >-kam
+x-kam → < gap >-kam
+
+
+Angantyr
+Posted 22 days ago
+
+The <gap> and <big_gap> are missing. Is it the markdown formatting?
+
+edit: it is. It shows up after clicking Quote.
+
+
+DeepPast
+Competition Host
+Posted 17 days ago
+
+yes, sorry, fixed it
+
+@nlztrk Did it work for you to collapse gaps? CV is stable but LB is worse here with simple gap/big_gap merge:
+
+def collapse_gaps(text):
+    """
+    Collapse consecutive <gap>/<big_gap> into a single <big_gap>.
+    Keep single isolated <gap> as-is.
+    """
+    tokens = text.split()
+
+    collapsed = []
+    i = 0
+    n = len(tokens)
+
+    while i < n:
+        if tokens[i] in {"<gap>", "<big_gap>"}:
+            j = i
+            while j < n and tokens[j] in {"<gap>", "<big_gap>"}:
+                j += 1
+
+            run_len = j - i
+
+            # If more than one gap marker => big gap
+            if run_len >= 2:
+                collapsed.append("<big_gap>")
+            else:
+                collapsed.append(tokens[i])
+
+            i = j
+        else:
+            collapsed.append(tokens[i])
+            i += 1
+
+    return " ".join(collapsed) 
+
+
+Anil Ozturk
+Posted 20 days ago
+
+· 280th in this Competition
+
+Im collapsing all big gaps into one big gap and all adjacent big gaps and gaps into a big gap. For now it works as the best. But the examples of the organizator violates this logic, we still don't know theirs.
+
+For the subscripts used in the determinatives, do they also need to be transformed to either diacritics or plain numbers?
+
+e.g. should it be {tug₂} or {tug2} ?
+
+
+Yicong XIAO
+Posted 22 days ago
+
+On second thought, since the determinatives appear only in the transliteration text, I can pick either scheme. Then, during inference, I can detect the determinatives in the test set input (should be fairly easy) and transform them according to the scheme I pick.
+
+
+DeepPast
+Competition Host
+Posted 23 days ago
+
+The expected format for {tug₂} or {tug2} is actually {túg}
+
+For background, in ASCII ATF (CDLI) they don't use diacritics for ú = u2, and ù = u3, and so on. Further, in Oracc these numbers become subscripts: ú = u₂, etc. That second comment was intended to indicate that for the readings with 2 or 3 this dataset used diacritics instead of numbers or subscripted numbers (i.e. á à é è í ì ú ù; NOT a2, a3, etc.; NOT a₂, etc.). However, sign values with 4, 5, 6, …, 10, 12, 13, etc. are found in the dataset (e.g., DU10). So aside from sign values with these readings á à é è í ì ú ù, this dataset uses integer numbers, not subscripted numbers.
+
+
+Anil Ozturk
+Posted 21 days ago
+
+· 280th in this Competition
+
+{túg} or {TÚG}? there is no lowercased {túg} in any guide you've shared. Please just give a reproducible normalization script or a very clear and strict conversion table. Most of your statements contradict each other.
+
+
+Jack
+Posted 21 days ago
+
+· 2nd in this Competition
+
+Uppercase.
+
+
+cmasch
+Posted 21 days ago
+
+· 241st in this Competition
+
+I fully agree with @nlztrk.
+
+It's indeed very time-consuming and quite a challenge to gain a unified understanding from all the different discussion threads. For example, in the mentioned list of transliteration characters, '…' is listed which should be converting to <big_gap>. However, x is notably absent but '…' is listed, although both should be replaced by a gap or big_gap. Could you please clarify why x is not included? Having a consistent, consolidated description, ideally on the competition page itself (or at least in a dedicated discussion), would be incredibly beneficial 🙂 This would particularly benefit newcomers to the competition, making it much easier for them to get up to speed.
+
+
+Jack
+Posted 21 days ago
+
+· 2nd in this Competition
+
+Check the overview page and the data provided
+
+DeepPast
+Competition Host
+Posted 18 days ago
+
+TÚG, without brackets (in the test data), but {tug2} in the CDLI data and {tug₂} in the Oracc data, in case you choose to use those.
+
+
+Anil Ozturk
+Posted 18 days ago
+
+· 280th in this Competition
+
+In the overview tab you are saying:
+
+{tug₂} = (TÚG) preceding textiles and other woven objects
+
+TÚG is being used with parentheses there but you are now saying without brackets. I think you need to clarify the exact form for that list. What should we expect for these in the test set:
+
+{d} = dingir ‘god, deity’ — d preceding non-human divine actors
+{mul} = ‘stars’ — MUL preceding astronomical bodies and constellations
+{ki} = ‘earth’ — KI following a geographical place name or location
+{lu₂} = LÚ preceding people and professions
+{e₂} = {É} preceding buildings and institutions, such as temples and palaces
+{uru} = (URU) preceding names of settlements, such as villages, towns and cities
+{kur} = (KUR) preceding lands and territories as well as mountains
+{mi} = munus (f) preceding feminine personal names
+{m} = (1 or m) preceding masculine personal names
+{geš} / {ĝeš) = (GIŠ) preceding trees and things made of wood
+{tug₂} = (TÚG) preceding textiles and other woven objects
+{dub} = (DUB) preceding clay tablets, and by extension, documents and legal records
+{id₂} = (ÍD) (a ligature of A and ENGUR, transliterated: A.ENGUR) preceding names of canals or rivers or when written on its own referring to the divine river
+{mušen} = (MUŠEN) preceding birds
+{na₄} = (na4) preceding stone
+{kuš} = (kuš) preceding (animal) skin, fleece, hides
+{u₂} = (Ú) preceding plants
+
+do not convert diacritics to ASCII (information loss!) do not remove subscripts (semantic meaning!) Evaluation data contains diacritics - be compatible with this
+
+am i right?
+
+DeepPast
+Competition Host
+Posted 25 days ago
+
+Close, but let me be clear:
+
+(1) with the exception of ḫ, the test data has diacritics (š ṣ ṭ ā á à ī í ì ū ú ù - and upper case versions). If you're obtaining data from CDLI or ORACC, you will need to convert their formatted transliterations to this diacritic style (conversions are listed in the overview) — note ā ī ū are in translations, not transliteration text.
+(2) there are no subscripted numbers in the test data, so expect A-šùr-DU10 for example.
+(3) keep diacritics for transliterations, but normalize them for translations of named entities, for example: A-šùr-DU10 (transliteration) --> Aššur-ṭāb (translation)
+
+
+QianYuu
+Posted 25 days ago
+
+· 23rd in this Competition
+
+Hello, why is your CHRF metric so high? What's the difference between it and the CHRF from the public notebook? Public notebook link: https://www.kaggle.com/code/takamichitoda/dpc-starter-train
+
+
+QianYuu
+Posted 25 days ago
+
+· 23rd in this Competition
+
+My guess is that if the sentences are the same, then you most likely did sentence alignment.
+
+
+heng
+Posted 25 days ago
+
+· 1st in this Competition
+
+This public notebook does not use competition metrics.
+
+Try: https://www.kaggle.com/code/metric/dpi-bleu-chrf
+
+
+MPWARE
+Posted 25 days ago
+
+· 11th in this Competition
+
+@deeppast
+
+(2) there are no subscripted numbers in the test data, so expect A-šùr-DU10 for example.
+
+You said something a bit different in another post:
+
+Subscript digits are converted to normal digits, except for 2 and 3, which are represented by diacritic marks over the vowels (see overview for more details)
+
+https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/664518#3382901
+
+Do I miss something?
+
+
+MPWARE
+Posted 24 days ago
+
+· 11th in this Competition
+
+Answer to myself: Now we know that first assertion it True and second is False.
+
+
+DeepPast
+Competition Host
+Posted 24 days ago
+
+Yes, right, the ack of specificity in that second statement is problematic. For background, in ASCII ATF (CDLI) they don't use diacritics for ú = u2, and ù = u3, and so on. Further, in Oracc these numbers become subscripts: ú = u₂, etc. That second comment was intended to indicate that for the readings with 2 or 3 this dataset used diacritics instead of numbers or subscripted numbers (i.e. á à é è í ì ú ù; NOT a2, a3, etc.; NOT a₂, etc.). However, sign values with 4, 5, 6, …, 10, 12, 13, etc. are found in the dataset (e.g., DU10). So aside from sign values with these readings á à é è í ì ú ù, this dataset uses integer numbers, not subscripted numbers.
+
+
+Floating Point Number Questions
+Hi @deeppast . I have a few questions. Any insights on them would be super helpful. I have found that there are a quite few long floating point numbers, which is likely due to floating point errors. To give a few examples
+
+oare_id	transliteration	translation
+672	697fdae3-abd6-4de6-89ac-03796381be51	0.33333 ma-na 1.3333300000000001 GÍN KÙ.BABBAR ṣa-ru-pá-am i li-bi šé-ep-IŠTAR 1 GÍN iš-tí e-wa-ri-mu-ša	0.3333 mina 1.3333 shekel of refined silver is in Šēp-Ištar's possession.
+1301	d1bc99fc-3f4b-476d-8c28-f072aa280083	3.6666600000000003 ma-na 2 GÍN AN.NA i li-bi₄ a-šur-SIPA IGI a-šur-dan IGI ir-ma-a-šur	3 minas 42 shekels of tin owed by Aššur-rē'ī. In the presence of Aššur-dān, of Ir'am-Aššūr.
+1458	ef2c3a21-2451-436b-b1a3-16b8574ff27a	1.3333300000000001 ma-na KÙ.BABBAR a-mu-ru-um i li-bi₄ a-da-da x um … DUMU šu-… 0.33333 ma-na KÙ.BABBAR ta-… ša a-lá-ḫi-im iš-tù ḫa-mu-uš-tim ša kur-ub-IŠTAR DINGIR ša-pá-tám i-li-ik KÙ.BABBAR il₅-qé	1.3333 mina of checked silver is owed by Adada.
+950	9676573d-7242-4ee0-a393-fea152d64de9	xx GÍN KÙ.BABBAR a-na du-li i-na ú-lá-ma a-dí-in um-ma šu-ut-ma ku-ta-nam ú-šé-ba-lá-kum 1.3333300000000001 ma-na KÙ.BABBAR KI ḫa-lu-a x x	I gave Duli in Ulama [x] shekels of silver. He said: I will send you one -textile." 1.3333 mina of silver is with halua …"
+1339	d93fadca-089c-4135-8228-bc755873b2bf	10.66666 GÍN a-šùr-ma-lik i-lá-qé 0.66666 ma-na 0.83333 GÍN kàr-wa-a 11 GÍN iṣ-mì-id-DINGIR 0.5 ma-na 3.6666600000000003 GÍN šu-ku-bu-um 15.33333 GÍN bu-zu-ta-a	10.6666 shekels Aššur-mālik will take, 40.83333 shekels Karwaya, 11 shekels Iṣmid-Ilum, 33.6666 shekels Šu-Kūbum, 15.3333 shekels Buztāya
+There are many more containing such floating point numbers. I could find 79 rows with 9 consecutive 0s with this code.
+
+df = pd.read_csv("/kaggle/input/deep-past-initiative-machine-translation/train.csv")
+df = df[df['transliteration'].str.contains('000000000', na=False)]
+Will such numbers appear in the test set? How should we translate such numbers? Sometimes these numbers are translated to fractions, and sometimes they are translated to numbers with inconsistent decimal places.
+
+No, there are no floats in the test set. I would encourage you to convert the decimals to fractions. Their system is base-60 so these fractions are predictable, these are the only ones you'll encounter:
+
+½ = 0.5
+¼ = 0.25
+⅓ = 0.333…
+⅔ = 0.666…
+⅙ = 0.166…
+⅚ = 0.833…
+If you consider that 1 mina = 60 shekels, then you get the following conversion into shekels:
+
+% of mina (ma-na) in shekels:
+
+½ = 0.5 = 30 shekels
+¼ = 0.25 = 15 shekels
+⅓ = 0.333… = 20 shekels
+⅔ = 0.666… = 40 shekels
+⅙ = 0.166… = 10 shekels
+⅚ = 0.833… = 50 shekels
+
+
+hongan
+Posted 11 days ago
+
+· 281st in this Competition
+
+Hi, what's the relationship between grains (ŠE) and mina and shekels?
+
+Cackler
+Competition Host
+Posted 11 days ago
+
+180 ŠE equals one GIN (shekel); sixty shekels equal one (MA.NA) mina; 60 mina equal one talent (GU2)
+
+See also:
+
+https://shs.hal.science/halshs-03923497/file/12-Michel-CulturesComputationQuantification.pdf
+
+
+hongan
+Posted 11 days ago
+
+· 281st in this Competition
+
+Thanks! quite difficult to decipher the units when translators are doing the math in their heads…
+
+
+Cackler
+Competition Host
+Posted 11 days ago
+
+You're welcome and I know. We translators also often make mistakes because we mess up addition/subtraction of fractions in the sexagesimal system as we jump units –– e.g. 3 5/6 mana equals 180+50 shekels. Now add 3/4 mana 2 shekels 15 ŠE.
+
+When I torture my students I give them the following, authentic school test frpm around 1730 BCE:
+
+"I found a stone I did not weigh it. I added 1/7 to its weight. I added 1/11. I weighed the stone - it was 1 mina. How much did it weigh before?"
+
+I always promise an A grade for the entire class if they can solve it within 60 seconds. For over a decade there have been no takers.
+
+
+
+hongan
+Posted 11 days ago
+
+· 281st in this Competition
+
+If I may ask another number question, I saw a lot of examples of this (ITU.KAM ṣí-ip-im) - (Month VII), which I assume here ṣí-ip-im means VII somehow, is there any reference material on this conversion? So I can understand what each of these corresponds to (I, II, III, IV, V, etc.)
+
+
+Cackler
+Competition Host
+Posted 11 days ago
+
+The Roman numeral refers to the month # -- so, "ṣip'um" is month seven -- meaning that you could translate "ITU.KAM ṣí-ip-im" as "month seven" or "the month of Ṣip'um" or similar.
+
+For the entire calendar, see:
+
+https://cdli.ox.ac.uk/wiki/doku.php?id=the_old_assyrian_calendar
+
+
+DeepPast
+Competition Host
+Posted 11 days ago
+
+This is an important question, and it should be addressed in terms of the test data as well. The train file doesn't have a lot of month names present, however the published_texts.csv does contain all of these month names. The first month is not attested in the test set, it is rarely mentioned, as discussed in chronological studies, such as Stratford (2017) A Year of Vengance.
+
+The roman numerals (Roman) were converted to integers for the test set, so it would be wise to know that when Month X is mentioned in translation, it should be converted to Month 10 (Month). You can use the following table for the conversions, and I also gathered a number of the written forms (forms) for these months as well as their aliases in translations (AKA).
+
+Month	Roman	MN	forms	AKA
+Month 2	III	ša-sarratim	ša sá-ra-tim	
+Month 3	III	Kenātim	ke-na-tim	ša kēnātim
+Month 4	IV	Mahur-ilī	Ma-hu-ur-DINGIR; ma-ḫu-ur-ì-lí	
+Month 5	V	Abšarrani	áb-ša-ra-ni; áb ša-ra-ni; áb-ša-ra-nu	ab šarrāni; abšarrani
+Month 6	VI	Hubur	Hu-bu-ur	
+Month 7	VII	Ṣip'um	ṣí-ip-im	ṣipum
+Month 8	VIII	Qarrātum	qá-ra-a-tí; qá-ra-a-tim	
+Month 9	IX	Kanwarta	kán-bar-ta; Kà-an-ma-ar-ta	Kanmarta
+Month 10	X	Te’inātum	té-i-na-tim	
+Month 11	XI	Kuzallum	ku-zal-li; ku-zal-lu	
+Month 12	XII	Allanātum	a-lá-na-tum; a-lá-na-tim	
+
+
+hongan
+Posted 11 days ago
+
+· 281st in this Competition
+
+Thanks. I believe this is also useful for others.
+
+
+Angantyr
+Posted 11 days ago
+
+When I torture my students I give them the following, authentic school test frpm around 1730 BCE:
+
+"I found a stone I did not weigh it. I added 1/7 to its weight. I added 1/11. I weighed the stone - it was 1 mina. How much did it weigh before?"
+
+The answer to be given in mina, shekels, grains or everything properly divided into all three?
+
+
+Tomorin
+Posted 4 days ago
+
+· 264th in this Competition
+
+There are also cases like "ITU.1.KAM na-ar-ma-ak a-šur".
+
+Without the next word "Sarrātim" or "Kēnātim" this could be month 2 or 3. How should we deal with this case?
+
+
+Hrithik Reddy
+Posted 4 days ago
+
+· 4th in this Competition
+
+@deeppast
+
+Transliteration : ITU.1.KAM áb-ša-ra-ni li-mu-um šu-sú-in DUMU ba-bi-lim
+
+Which would be the correct translation according to test set formatting
+
+ Month Ab-šarrāni, in the eponymy Šu-Suen son of Babilum.
+ Month Abšarrani, in the eponymy Šu-Suen son of Babilum.
+ Month V, in the eponymy of Šu-Suen, son of Babilum.
+ Month 5, in the eponymy of Šu-Suen, son of Babilum.
+
+
+hongan
+Posted 3 days ago
+
+· 281st in this Competition
+
+my guess is the last one
+
+
+Hrithik Reddy
+Posted 3 days ago
+
+· 4th in this Competition
+
+Thinking the same , but just to be sure
+
+
+
+耶✌
+Posted 3 days ago
+
+· 40th in this Competition
+
+What can be confirmed so far is that there is no third option.
+
+
+DeepPast
+Competition Host
+Posted 3 days ago
+
+Exactly, it definitely won't be Month V. The translators were not consistent with the name normalization (hence the onomasticon I provided), and they weren't consistent with the conversion of month names to month numbers (hence my month name to number chart). In general, it's more common to see the month name rather than the number.
+
+Significant number (up to 25%) of incorrectly truncated texts in train.csv
+Some time ago I posted a short analysis on how some translations were too short for their corresponding transliterations and more recently how insight gained from "Sentences_Oare_FirstWord_LinNum.csv" confirmed that the problem.
+
+The problem became elusive for a lack of good rule to pinpoint the faulty texts, until I followed a conversation with Aaron about number allignment.
+
+When implemented, this yielded around 400 texts, which gives about 25% of total texts from train.csv. That's significant and could impact the performance of the models learning to predict something that is not there.
+
+The number is not fixed and is strongly dependent on the pattern I used for capturing the consecutive number sequences in transliterations and in translations, then aligning the matches by ID and identifying mismatches.
+
+Number sequences in transliterations
+'((?:\d+\.*\d*)*\s*(?:(?:ma-na)|GÍN|GÚ|(?:me-at))(?:(?:\s|\sù\s)(?:\d+\.*\d*)\s(?:(?:ma-na)|GÍN|GÚ))*)'
+This captures all sequencess that:
+
+start with at least a single digit (optionally followed by a dots and digits to account for floating point numbers)
+followed by the quantity-related sequences (ma-na - mina, GÍN - shekel, GÚ - talent, me-at - hundred)
+optionally followed by a sequences (me-at excluded) either whitespace separated or ù-separated (Old Assyrian for and)
+Number sequence in translations
+((?:(?:\d+\.*\d*)|(?:(?:\d+\s?\d+)\s?/\s?\d+)|one|two|three|four|five|six|seven|eight|nine|ten)*\s*(?:(?:mina[s]?)|s[hk]{1}e[hk]{1}el[s]?|talent[s]?))(?:(?:\s|\sand\s|\sor\s)(?:(?:\d+\.*\d*)|one|two|three|four|five|six|seven|eight|nine|ten)\s(?:(?:mina[s]?)|s[hk]{1}e[hk]{1}el[s]?|talent[s]?))*
+This works similarly to the transliteration pattern but accounts for more numerals (one up to ten) and typos in the word shekel (sometimes spelled skekel).
+
+Word length correlation (translation vs. transliteration)
+Using the above captures patterns results in matches, which alligned based on the text index give the alignment: 
+
+If removed, the correlation between the word lengths (split on whitespace) of transliterations and translations becomes more apparent. The texts have not been cleaned prior to the splitting, which is the source of additional noise. The gaps should be collapsed to <gap> and <big_gap> but I wanted to share some information on raw data first. 
+
+That and more information is shared in the analysis notebook.
+
+Personally I would not remove the texts altogether, since there are already signs and words poorly represented. A clean way to crop the texts at the last matching point could be of potential benefit, though.
+
+I'm noticing that the main reason i don't think this is impacting the leaderboard is that everyone seems to be truncating after 512 chars when training on the documents if we want to take advantage of chunking the full text I think approaches like this are going to be important.
+
+
+Angantyr
+Topic Author
+Posted 9 days ago
+
+100% agree on the chunking. I think the "necessary" transliterated texts can be way shorter than 512 chars if one uses things like PN, GN, quantities, etc.
+
+
+Aaron Bornstein
+Posted 9 days ago
+
+· 147th in this Competition
+
+It’s an interesting idea using masking and slot filling to make the model generalize I saw some one try it in another thread though and the model just learned to generate the text PN son of PN. I think the model attention can lose crucial token context if you do that since part of how byT5 learns is by learning latent feature relationships between the input and output characters. If you mask all these terms at once you end up with less information to learn on. If you’re going to do this approach what I would suggest is applying augmented masking probabilistically on different samples in your batch that way you can try to learn these relationships and let your model generalize better.
+
+
+
+Angantyr
+Topic Author
+Posted 9 days ago
+
+Oh, no, I meant fragmenting the text and sacrificing the bigger context, i.e.,
+
+Um-ma PN DUMU PN a-na PN <some words> 5 GÍN <some words> 0.3333 ma-na <some words> PN
+
+would be separated into:
+
+[Um-ma PN DUMU PN a-na PN <some words> 5 GÍN, 5 GÍN <some words> 0.3333 ma-na, 0.3333 ma-na PN`]
+
+Every chunk is then translated and stitched together on common and known separators. The more such "static" separators are found the smaller the text to translate becomes.
+
+
+Aaron Bornstein
+Posted 9 days ago
+
+· 147th in this Competition
+
+I think I understand better, but I’m still a little confused whether this kind of segmentation will work cleanly because the subject verb object order is different between the two languages. What you’re trying to do is use the core units as segmentation and alignment anchors. You should check out my alignment notebook it has a lot of these ideas.
+
+Question about OA_Lexicon_eBL.csv - Personal Name Spelling Inconsistency with Ground Truth
+Hi everyone, I've been trying to use the "OA_Lexicon_eBL.csv" lexicon for post-processing to verify personal names in translations. However, I noticed that the norm field in the lexicon often differs from the actual spelling used in the ground truth translations.
+
+Examples: Source (transliteration) Lexicon norm Ground Truth spelling
+
+šu-ku-bi-im Šu-Kūbim Šu-Kūbum
+šu-ta-mu-zi Šu-Tammazi Šu-Tammuzī
+e-lá-a Elā(ya) Elaya
+a-bi₄-lá Abela Abila
+Statistics:
+
+Total personal names detected in training data: 11,381
+Exact match with lexicon norm: 37.2%
+Fuzzy match (85% similarity): 73.3%
+Still unmatched after fuzzy matching: 26.7% (~3,041 names)
+Questions:
+
+Is this spelling variation intentional? (e.g., different scholarly conventions)
+Is there a recommended way to use the lexicon for name verification/correction?
+Are there any additional resources that map between these spelling variants?
+
+DeepPast
+Competition Host
+Posted a month ago
+
+Yes, Angantyr is correct, and your questions are worth addressing one by one:
+
+(1) Spelling variation exists at both the transliteration and normalization (unfortunately). For example we find: Ahu-waqar = A-hu-wa-qar & A-hu-qar Ahuwaqar = A-hu-wa-qar & A-hu-qar
+
+This discrepency is because there are many scholars all over the world doing their best to normalize the names on these texts, but there are not yet firmly established conventions for every name encountered on the texts. I realize this is a big issue, since most of the OOV (out of vocabulary) words are going to be proper nouns / names. So I'm working on getting a list of spellings and normalizations together for the supplemental data.
+
+(2) Most of the names are provided in the OA_Lexicon_eBL.csv and given a "PN" type (instead of "Word"). And I will share a more robust onomasticon (list of names) shortly.
+
+(3) All the resources we provided are what is currently available in digital format. There are lists of personal names in book publications in the index of the major text editions, and specialist studies (e.g. https://archive.org/details/veenhof-1972-assyrian-trade/page/n515/mode/2up). But these are rarely accessible online as far as I'm aware.
+
+
+Reki
+Topic Author
+Posted a month ago
+
+· 5th in this Competition
+
+OK. Thank you for your reply.
+
+The translation column of the final test predictions into the corresponding <gap> and <big_gap> tags
+I trained the model by replacing all instances of … [x], x, etc. in the transliteration column of train.csv with <gap> and <big_gap>, then made predictions on test.csv. Meanwhile, I replaced all … in the prediction results with <big_gap>and all x with <gap>.
+
+My LB score reached 30.3, and I have released the training code, the converted datasets as well as the submission code. :)
+
+I’ll share my scoring progress and implementation details here in the next steps, and hope this helps you all.
+
+LB	size	submit time	epoch	Training Loss	Validation Loss	Chrf	progress
+31.3	725B	-	10	0.290900	0.418788	5.175934	revised the <gap> <big_gap>
+31.0	569B	19min	10	0.304600	0.421686	5.082081	revised the <gap> <big_gap>, determinatives, fraction such as ¼, curly braces {} and delete parentheses ().
+31.5	762B	21min	10	0.282200	0.389588	5.320788	Shortened and aligned the 14 sentences with length exceeding 512, resulting in a total of 1595 pieces of data; meanwhile, revised the <gap> <big_gap>, determinatives, fraction such as ¼, curly braces {} ,and delete slash /, parentheses ().
+31.8	749B	-	10	0.297200	0.400207	5.364566	Shortened and aligned the 14 sentences with length exceeding 512, resulting in a total of 1595 pieces of data; meanwhile, revised the <gap> <big_gap>
+32.3	695B	19min	10	0.296600	0.385465	5.364575	Shortened and aligned the 16 sentences with length exceeding 512, resulting in a total of 1604 pieces of data; meanwhile, revised the <gap> <big_gap>,determinatives, fraction such as ¼, curly braces {} ,keep ! ? (),and delete slash / ,fem. plur. sing. pl.
+The Second Stage
+
+I'm back—but actually, I never left. 32.8 This result is definitely not up to my expectations, lol, but the task isn’t finished yet, so there should still be room for improvement.
+
+LB	size	submit time	epoch	Training Loss	Validation Loss	Chrf	progress
+32.8	797B	17min	10	0.277100	0.370077	6.596245	MAX_LENGTH=385,revised the <gap> <big_gap>,Ensure that the <gap> on both sides exist simultaneously or are absent simultaneously, All subscript numbers uppercase, keep determinatives(Ḫ,ḫ), delete ! ? () " ; — - – < > ⌈ [ ] + ʾ / ,fem. plur. sing. pl. , total of 1703 pieces of data
+33.0	699B	17min	10	0.276200	0.353537	5.957525	MAX_LENGTH=475,revised the <gap> <big_gap>,Ensure that the <gap> on both sides exist simultaneously or are absent simultaneously, All subscript numbers uppercase, keep determinatives(Ḫ,ḫ), delete ! ? () " ; — - – < > ⌈ [ ] + ʾ / ,fem. plur. sing. pl. , total of 1703 pieces of data
+33.3	820B	18min	10	0.284400	0.351412	5.638265	MAX_LENGTH=512,revised the <gap> <big_gap>,Ensure that the <gap> on both sides exist simultaneously or are absent simultaneously, All subscript numbers uppercase, keep determinatives(Ḫ,ḫ), delete ! ? () " ; — - – < > ⌈ [ ] + ʾ / ,fem. plur. sing. pl. , total of 1703 pieces of data
+At present, I have basically aligned the 94 filtered documents with lengths exceeding 512 characters, and revised nearly 100 documents with abnormal length ratios. As for why MAX_LENGTH is set to 385, the reason is CUDA out of memory.
+
+想问下，连词符号应该去掉吗？例如A-mur-{d}UTU 转换成Amur D UTU 或 Amur DUTU ？ 看到你之前清洗后的数据还是包含连词符的，官方给的描述还是比较含糊的😅
+
+
+耶✌
+Topic Author
+Posted 10 days ago
+
+· 40th in this Competition
+
+不能去掉，完全不可以，需要处理的主要是转换为gap和big_gap,以及浮点数字从0.3333到⅓这样，没有任何/,然后是罗马数字变为阿拉伯数值 X->10,还有就是限定词，transliteration列的()转为{},其他的标点符号就看你自己个人了，目前没有统一的方法，你可以融合几个不同训练数据的模型，来弥补这些差异，至少现在公开的code，就是这样，竟然达到了34.2。所以保留你的A-mur-{d}UTU，现在就是最完美的样子了
+
+i can ask u? what u use method for solve problems hallucination and repetition word???
+
+
+耶✌
+Topic Author
+Posted 24 days ago
+
+· 40th in this Competition
+
+I haven't reached the stage of solving this problem yet. The maximum token capacity of my current code model is 512, and hallucinations tend to come with repeated words when the text length increases. I think this issue can be addressed through the following two approaches:
+
+Increase the token capacity, which however requires greater computing power.
+Truncate long sentences into smaller ones by semantic meaning for training, but it will take some time to do.
+good luck
+
+
+Jack
+Posted 24 days ago
+
+· 2nd in this Competition
+
+How the heck are you aligning sentences to actually improve your score? I’ve spent hours going through the sentence alignment file to create sentences and manually verified everything and all it did was lower my score.
+
+
+耶✌
+Topic Author
+Posted 24 days ago
+
+· 40th in this Competition
+
+That's a great question, and I'll break down the answer into three points:
+
+First, the sentences I’m currently processing: sentences where both the transliteration and translation columns exceed 512 characters, and their oare_id exists in Sentences_Oare_FirstWord_LinNum.csv (the critical basis for my segmentation). So far, I’ve filtered out only 94 sentences that meet the above criteria.
+
+How I process these sentences: I perform truncation using the sentence start words and English translations from Sentences_Oare_FirstWord_LinNum.csv, while striving to preserve semantic integrity and avoiding truncation of single isolated sentences. Minor punctuation adjustments may be made during truncation—for example, removing or reinserting the closing quotation mark if there is no matching " after said:". Additionally, translations in Sentences_Oare_FirstWord_LinNum.csv may have slight discrepancies with those in train.csv, and the two datasets are complementary to each other. Ultimately, the only requirement is that the truncated length does not exceed 512 characters, as I aim to avoid losing semantic information of the entire passage.
+
+On score improvement: I remain somewhat skeptical here. Although truncating sentences alone boosted my score by 0.5, my random seed is still set to 42. As the total number of rows in train.csv increases, the split results for the validation and training sets will change. This may cause the model to train on and learn new content, which could be the actual reason for the score increase.
+
+Conclusion: I will continue aligning partial sentences and monitor the LB score. A significant LB score improvement will confirm the effectiveness of this approach. In fact, with the current token limit of 512, a large volume of data is undoubtedly omitted. Sentence alignment should yield certain benefits, but it requires meticulous execution (there is no definitive rule for this task).Hope this helps you.
+
+
+Jack
+Posted 24 days ago
+
+· 2nd in this Competition
+
+Want to check my sentence alignment results from my programmatic + manual approach with what you've got?
+
+
+耶✌
+Topic Author
+Posted 24 days ago
+
+· 40th in this Competition
+
+You can share you data,public
+
+
+QianYuu
+Posted 19 days ago
+
+· 23rd in this Competition
+
+Hello, I have a question. Does your statement that the length exceeds 512 refer to the length of the characters themselves, or the length after space splitting (len(xxx.split(" "))))?
+
+
+耶✌
+Topic Author
+Posted 19 days ago
+
+· 40th in this Competition
+
+没有经过任何处理，是原始的长度，包含了" "
+
+
+QianYuu
+Posted 19 days ago
+
+· 23rd in this Competition
+
+Thank you. Could you please explain your understanding of the first_word_number, first_word_obj_in_text, line_number, and side column fields?
+
+
+
+耶✌
+Topic Author
+Posted 19 days ago
+
+· 40th in this Competition
+
+我目前认为比较好理解的是first_word_number和side column。
+
+first_word_number: 就是这个单词是这一段话里的第几个词(不包含数值 很重要！)
+
+side column: 这个你要结合实际，Akkadian 其实有很多载体，最主要的就是泥板(tablet),然后泥板的每个面都可以写东西(最主要有 Obverse Reverse Edge Left Seal A Seal F )等等面
+
+QianYuu
+Posted 18 days ago
+
+· 23rd in this Competition
+
+Given these split sentences, will you delete the original entire paragraph to merge the split sentences, or will you merge the split sentences directly without deleting them?
+
+耶✌
+Topic Author
+Posted 18 days ago
+
+· 40th in this Competition
+
+会删除已经合并的片段，因为512token截断了句子，我们本来就是想通过句子对齐来解决这个问题
+
+
+QianYuu
+Posted 18 days ago
+
+· 23rd in this Competition
+
+Thank you for your answer. I look forward to hearing your data processing method.
+
+"Shortened and aligned the 14 sentences with length exceeding 512, resulting in a total of 1595 pieces of data"
+
+How is this implemented?
+
+
+耶✌
+Topic Author
+Posted 25 days ago
+
+· 40th in this Competition
+
+I implemented this manually. Although the organizer released the file Sentences_Oare_FirstWord_LinNum.csv, I noticed that the truncation logic does not seem to include numeric characters, which prevented me from truncating sentences accurately. (It is also possible that I misunderstood the usage instructions.) Therefore, I manually truncated the translation and transliteration columns with content length exceeding 512 to achieve sentence-level alignment. This process also helped me gain a better understanding of Akkadian.
+
+The current 0.5-point improvement has boosted my confidence significantly. My next task will likely be to further optimize sentence alignment. Given my lack of computing resources and reliance on Kaggle's GPU, a 512 token limit is currently the optimal choice.:)
+
+
+QianYuu
+Posted 25 days ago
+
+· 23rd in this Competition
+
+Thank you. I'm also studying Sentences_Oare_FirstWord_LinNum.csv and have made some attempts, but the LB has dropped. I need to take another look.
+
+
+Jack
+Posted 25 days ago
+
+· 2nd in this Competition
+
+Same here 😅 it'll be worth it to figure out though
+
+Your 33.0 LB is really great. I believe 33.0 is definitely not your limit. Currently, I haven't made any significant breakthroughs in sentence alignment. I'll study it some more.
+
+
+耶✌
+Topic Author
+Posted 16 days ago
+
+· 40th in this Competition
+
+Aligning documents with a length of over 512 characters should only serve to expand vocabulary. For score improvement, it is still necessary to truncate the corresponding erroneous sentences in the transliteration and translation columns. These errors can be easily identified using the ratio metric. Thank you for your response.:)
+
+
+QianYuu
+Posted 16 days ago
+
+· 23rd in this Competition
+
+ Yes, I found that many character lengths didn't match. I thought it was because my character segmentation wasn't good enough, haha, turns out that just deleting those characters solved the problem.
+
+
+
+Angantyr
+Posted 16 days ago
+
+Some transliterations or translations are truncated and don't match. I made a list of the transliteration OARE IDs along with a short analysis based on the texts covering train.csv and Sentences_Oare_FirstWord_LinNum.csv.
+
+
+耶✌
+Topic Author
+Posted 16 days ago
+
+· 40th in this Competition
+
+Yes, direct deletion is the fastest method. However, attempting truncation allows us to retain a great deal of semantic information.
+
+i think mayby domain in test very difference train set and format text diff. i trained model by sentence level. i sentence alignment 8000 sentence can more gm in val set so high (train 80% val 20%) but submit get score 30 
+
+My situation is similar to yours; my score is 31.6.
+
+
+
+Preechanon Chatthai
+Posted 19 days ago
+
+· 82nd in this Competition
+
+i think preprocess and postprocess more important than model
+
+
+
+Preechanon Chatthai
+Posted 19 days ago
+
+· 82nd in this Competition
+
+i think we should try to be as close to the hidden test set format as possible and denoise it. maybe can get more gm score. but idk what i should do.
+
+
+QianYuu
+Posted 19 days ago
+
+· 23rd in this Competition
+
+Haha, this competition has become a challenge of understanding and processing data, and has little to do with the model.
+
+@qifeihhh666 what is the rationale of replacing all instances of … [x], x, etc. in the transliteration column only and not in the translation column as well?
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+The translation column needs to be converted into<gap><big_gap>
+
+It's strange i tried this and dropped to from 28.3 to 27.6 I wonder what I did wrong
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+The translation column needs to be converted into <gap><big_gap>
+
+
+Aaron Bornstein
+Posted a month ago
+
+· 150th in this Competition
+
+Strange I did this though I did it for both the translation and transliteration.
+
+Then based on your comment in another notebook i did only the transliteration.
+
+Neither work for me I really wonder what i'm missing.
+
+def replace_gaps(text):
+    if pd.isna(text): 
+        return text
+
+    text = re.sub(r'\[\.{3}(?:\s+\.{3})+\]\s+\.{3}(?:\s+\.{3})+', '<big_gap>', text)
+    text = re.sub(r'\[\.{3}(?:\s+\.{3})+\]', '<big_gap>', text)
+    text = re.sub(r'\.{3}(?:\s+\.{3})+', '<big_gap>', text)
+
+    text = re.sub(r'\[x\]', '<gap>', text)
+    text = re.sub(r' x ', ' <gap> ', text)
+    text = re.sub(r'\[…\]', '<big_gap>', text)
+    text = re.sub(r'\[\.\.\.\]', '<big_gap>', text)
+    text = re.sub(r'…', '<big_gap>', text)
+    text = re.sub(r'\.\.\.', '<big_gap>', text)
+
+    return text
+
+ train_expanded = simple_sentence_aligner(train_df)
+
+ train_expanded['transliteration'] = train_expanded['transliteration'].apply(lambda x:replace_gaps(x))
+#train_expanded['translation'] = train_expanded['translation'].apply(lambda x:replace_gaps(x))
+
+ train_expanded.head()
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+You're doing the right thing. When I used this code on Kaggle, I found the results inconsistent with those processed on my local machine. I first completed the processing locally and double-checked all formatting details like x, xx… […], and everything was perfect. So I recommend processing on your local machine as it’s easier to verify. I’ll publish the 31.3 train.csv dataset shortly, and you can compare the differences with your processed version.good luck
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+This is the dataset I used for training.train data
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+[3510/3510 1:22:44, Epoch 10/10]
+
+Epoch	Training Loss	Validation Loss	Chrf
+1	0.786000	0.640140	4.082023
+2	0.616300	0.551597	4.468811
+3	0.536500	0.497410	4.932824
+4	0.456200	0.455575	5.027439
+5	0.397200	0.426659	5.080146
+6	0.353600	0.415668	5.103130
+7	0.332700	0.410799	5.150165
+8	0.312800	0.409823	5.140119
+9	0.294000	0.410092	5.141407
+10	0.287300	0.410267	5.161873
+
+
+Aaron Bornstein
+Posted a month ago
+
+· 150th in this Competition
+
+I appreciate all the support and advice here i'll give that a try now by the way one thing i noticed in your training notebook. I'm not sure the simple_sentence_aligner is doing anything I get the same number of rows before and after running it after i get this gap trick to work I plan to pivot to alignment.
+
+
+耶✌
+Topic Author
+Posted a month ago
+
+· 40th in this Competition
+
+Yes, because the final test.csv is in a sentence-aligned format, rather than the document-level alignment used in the current train.csv. Meanwhile, the maximum input length of the model being trained is 512, which results in truncation of a large amount of training data. Converting document-level data into sentence-level alignment is a crucial method to boost performance in subsequent experiments.
+
+This is also one of the sources for supplementing data.
+
+
+Aaron Bornstein
+Posted 25 days ago
+
+· 150th in this Competition
+
+Good news i trained on the set you provided and it worked I'm now at 31.1. I'm transitioning to work on the sentence alignment challenge I have some ideas of how to do this if I am able to make progress I will share with you the segmented sentence pairs.
+
+
+耶✌
+Topic Author
+Posted 25 days ago
+
+· 40th in this Competition
+
+Congratulations! Yes, At the begining I try sentence alignment, but the results were unsatisfactory (probably because the format hasn't been properly adjusted). So I've been following up on the discussion to fix the formatting issues continuously.Through these days' efforts, tomorrow I'll retry the sentence-aligned dataset with the corrected format conversion. Good luck!
+
+t
+QianYuu
+Posted 25 days ago
+
+· 23rd in this Competition
+
+I'm doing the same job as you.
+
+耶✌
+Topic Author
+Posted 25 days ago
+
+· 40th in this Competition
+
+Something amazing—I did maybe exactly these things and got an LB score of 31.5.lol
+
+
+QianYuu
+Posted 25 days ago
+
+· 23rd in this Competition
+
+Congratulations!
+
+Angantyr
+Posted 24 days ago
+
+I digged into the issue @einherjer posted earlier: https://www.kaggle.com/competitions/deep-past-initiative-machine-translation/discussion/664177#3383842
+
+There's a portion of texts where (2 broken lines) string is clearly counted as x x x instead of .... I'm guessing that if the problem is present in Sentences_Oare_FirstWord_LinNum.csv and in the hidden test then taking that into account could boost the score a bit further (at least until the issue is resolved :D).
+
+
+Carol Wang
+Posted 24 days ago
+
+· 364th in this Competition
+
+Can I ask you how to deal with the oare_id ?
+
+
+Angantyr
+Posted 24 days ago
+
+@ilanwang What do you mean by "dealing with the oare_id"?
+
+
+耶✌
+Topic Author
+Posted 24 days ago
+
+· 40th in this Competition
+
+I convert any broken lines and large break to <big_gap>.
+
+
+HZM
+Posted 20 days ago
+
+· 3rd in this Competition
+
+Thanks so much for your share, would you like to show how to preprocess this training data especally replace progress
+
+
+耶✌
+Topic Author
+Posted 20 days ago
+
+· 40th in this Competition
+
+我目前还卡在32.3，应该是格式还有很多错的，我一直在修改，你可以先看看别人和主办方给的归一化建议，等我完善我的归一化格式之后再分享代码。🙂
+
+
+
+HZM
+Posted 19 days ago
+
+· 3rd in this Competition
+
+感谢 大佬 回复 很硬核的分享
+
+The oare_id from the train.csv matches the text_uuid from the Sentences_Oare_FirstWord_LinNum.csv.
+
+END OF DISCUSSION
+
+Now with all the info you have above. First plan and show me what is going to be our approach to build the best dataset that will get us the highest LB and next what are ALL the points we can make out of this huge discussion thread. Be detailed and check with the dataset files, if possible download them or ask me to upload them one by one before your analysis. 
